@@ -8,4 +8,4 @@ Use vscode run `research.ipynb`
 
 - [x] 重命名图片: 支持删除部分生成的图片，并重命名
 
-- [ ] 上传图片: 上传图片到 ipfs，并生成一个 _tokenID + 各属性 + 图片_ url 的 csv 供之后使用
+- [x] 上传图片: 上传图片和 metadata 到 ipfs，并生成 tokenURL 的 hash
