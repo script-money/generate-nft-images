@@ -1,6 +1,16 @@
 # Generate images
 
-Use vscode run `research.ipynb`
+## 安装
+
+推荐用 [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/) 来进行环境运行管理，安装完miniconda后，运行下面指令生成环境并运行
+
+1. `conda create --name generate python=3.9 pillow pandas requests jupyterlab`
+2. `conda activate generate`
+3. `pip install python-dotenv`
+4. `cd generate-nft-images`
+5. `jupyter lab .` 然后打开research.ipynb运行即可 (或者用 vscode 运行 `research.ipynb`)
+
+## 特性
 
 - [x] 生成模版: 读取 parts 文件夹，读取里面的文件，检验格式和尺寸，生成一个 csv
 
