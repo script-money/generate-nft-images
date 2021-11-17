@@ -3,3 +3,4 @@
 .env
 images/
 metadata/
+__pycache__/
