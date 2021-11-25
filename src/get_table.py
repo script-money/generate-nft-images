@@ -16,7 +16,7 @@ NAME = "Double Letter"
 DESCRIPTION = "Double Letter For Test"
 
 # Iterate to get the material file
-def get_files_path(folder="./PARTS"):
+def get_files_path(folder=PARTS):
     files_path = []
     for root, dirs, _ in os.walk(folder):
         if root != PARTS:
