@@ -6,7 +6,7 @@
 
 1. `conda create --name generate python=3.9 pillow pandas requests jupyterlab`
 2. `conda activate generate`
-3. `pip install python-dotenv`
+3. `pip install python-dotenv` and `pip install py-cid`
 4. 运行`python src/get_table.py`，会生成一个叫 ratio.csv 的表格，对里面的内容进行修改
 5. 运行`python src/generate.py`，生成图片
 6. (可省略) `python src/final_check.py`，删除重复并查看当前的概率分布，可以再做调整。

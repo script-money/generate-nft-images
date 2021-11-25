@@ -6,6 +6,7 @@ from get_table import IMAGES, METADATA, NAME, DESCRIPTION
 import pandas as pd
 import numpy as np
 from final_check import RENAME_DF
+from cid import make_cid
 
 load_dotenv()
 
@@ -73,7 +74,6 @@ def upload_folder(
 
 def generate_metadata_and_upload(
     df: pd.DataFrame,
-    image_ipfs_root: str,
     image_ipfs_data: dict,
     start_count: int = 0,
     image_folder: str = IMAGES,
@@ -82,7 +82,6 @@ def generate_metadata_and_upload(
     for idx, row in df.iterrows():
         path = row["path"]
         imagehash = row["imagehash"]
-        returnHash = ""
         index = idx + start_count
         if imagehash == None:
             print(path)
@@ -96,10 +95,13 @@ def generate_metadata_and_upload(
             df.loc[idx, "imagehash"] = image_dict["Hash"]
             cols = list(df.columns)[2:]
             attributes = [{"value": col, "trait_type": row[col]} for col in cols]
+            cidv1 = (
+                make_cid(image_dict["Hash"]).to_v1().encode("base32").decode("UTF-8")
+            )  # convert cidv1 reduce image load time
             info_dict = {
                 "name": f"{NAME} #{index}",
                 "description": f"{DESCRIPTION}",
-                "image": f"ipfs://{image_dict['Hash']}",
+                "image": f"https://{cidv1}.ipfs.dweb.link/",
                 "attributes": attributes,
             }
             info_json = json.dumps(info_dict)
@@ -127,4 +129,4 @@ if __name__ == "__main__":
     )
     print(f"Index from {start} to {end}")
     print(f"Or visit https://cloudflare-ipfs.com/ipfs/{tokenurl_hash}/{start}")
-    print("May take some times")
+    print("May take some times load page")
