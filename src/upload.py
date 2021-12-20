@@ -43,11 +43,13 @@ def upload_folder(
             for file in list(filter(lambda i: "." not in i, os.listdir(folder_name)))
         ]
     response = rq.post(
-        f"https://ipfs.infura.io:5001/api/v0/add?pin=false&recursive=true&wrap-with-directory=true",
+        f"https://ipfs.infura.io:5001/api/v0/add?recursive=true&wrap-with-directory=true",  # remove pin=false if want to pin files
         files=files,
         auth=(PROJECT_ID, PROJECT_SECRET),
         proxies=PROXIES,
     )
+
+    # TODO add hash to csv
 
     upload_folder_res_list = response.text.split("\n")
     assert len(files) + 2 == len(
@@ -121,12 +123,8 @@ if __name__ == "__main__":
     image_ipfs_root, image_ipfs_data = upload_folder(IMAGES)
     print(f"image_ipfs_root: {image_ipfs_root}")
     print(f"image_ipfs_data: {image_ipfs_data}")
-    tokenurl_hash, start, end = generate_metadata_and_upload(
-        df, image_ipfs_root, image_ipfs_data
-    )
+    tokenurl_hash, start, end = generate_metadata_and_upload(df, image_ipfs_data)
     print(
         f"Source url is {tokenurl_hash}, you can visit ipfs://{tokenurl_hash}/{start} to check"
     )
     print(f"Index from {start} to {end}")
-    print(f"Or visit https://cloudflare-ipfs.com/ipfs/{tokenurl_hash}/{start}")
-    print("May take some times load page")
