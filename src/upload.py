@@ -87,7 +87,7 @@ def generate_metadata_and_upload(
             None,
         )
         cols = list(df.columns)[1:]  # exclude index
-        attributes = [{"value": col, "trait_type": row[col]} for col in cols]
+        attributes = [{"value": row[col], "trait_type": col} for col in cols]
         cidv1 = (
             make_cid(image_dict["Hash"]).to_v1().encode("base32").decode("UTF-8")
         )  # convert cidv1 reduce image load time
