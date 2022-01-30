@@ -23,19 +23,18 @@ def remove_duplicate_images(root: str):
 
 
 def generate_csv() -> pd.DataFrame:
-    cols = ["index", "imagehash", "path"] + [i["trait_type"] for i in random_attr()]
+    cols = ["index", "path"] + [i["trait_type"] for i in random_attr()]
     all_data = []
     n = 0
     for root, _, files in os.walk(IMAGES):
         for file in files:
             if os.path.splitext(file)[1] == ".png":
                 old_path = os.path.join(root, file)
-                imagehash = None
                 new_file = str(n) + "-" + "-".join(file.split("-")[1:])
                 path = os.path.join(IMAGES, new_file)
-                index, *args, extension = new_file.replace(".", "-").split("-")
+                index, *args, _ = new_file.replace(".", "-").split("-")
                 os.rename(old_path, path)
-                all_data.append([int(index), imagehash, path, *args])
+                all_data.append([int(index), path, *args])
                 n += 1
     all_data.sort(key=lambda i: i[0])
     df = pd.DataFrame(all_data, columns=cols).drop(columns=["index"])

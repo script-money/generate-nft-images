@@ -1,23 +1,19 @@
-from dotenv import load_dotenv
 import os
 import requests as rq
 import json
-from get_table import IMAGES, METADATA, NAME, DESCRIPTION
+from get_table import (
+    IMAGES,
+    METADATA,
+    NAMES,
+    DESCRIPTION,
+    PROXIES,
+    PROJECT_ID,
+    PROJECT_SECRET,
+)
 import pandas as pd
-import numpy as np
 from final_check import RENAME_DF
 from cid import make_cid
-
-load_dotenv()
-
-PROXIES = {
-    "http": "http://127.0.0.1:7890",
-    "https": "http://127.0.0.1:7890",
-}
-
-# Load upload configuration, need to register ipfs of infura to get PROJECT_ID and PROJECT_SECRET
-PROJECT_ID = os.getenv("PROJECT_ID")
-PROJECT_SECRET = os.getenv("PROJECT_SECRET")
+import random
 
 
 def upload_folder(
@@ -43,13 +39,11 @@ def upload_folder(
             for file in list(filter(lambda i: "." not in i, os.listdir(folder_name)))
         ]
     response = rq.post(
-        f"https://ipfs.infura.io:5001/api/v0/add?recursive=true&wrap-with-directory=true",  # remove pin=false if want to pin files
+        f"https://ipfs.infura.io:5001/api/v0/add?pin=false&recursive=true&wrap-with-directory=true",  # pin=true if want to pin files
         files=files,
         auth=(PROJECT_ID, PROJECT_SECRET),
         proxies=PROXIES,
     )
-
-    # TODO add hash to csv
 
     upload_folder_res_list = response.text.split("\n")
     assert len(files) + 2 == len(
@@ -83,39 +77,35 @@ def generate_metadata_and_upload(
 ) -> tuple[str, int, int]:
     for idx, row in df.iterrows():
         path = row["path"]
-        imagehash = row["imagehash"]
         index = idx + start_count
-        if imagehash == None:
-            print(path)
-            image_dict = next(
-                filter(
-                    lambda i: os.path.join(image_folder, i["Name"]) == path,
-                    image_ipfs_data,
-                ),
-                None,
-            )
-            df.loc[idx, "imagehash"] = image_dict["Hash"]
-            cols = list(df.columns)[2:]
-            attributes = [{"value": col, "trait_type": row[col]} for col in cols]
-            cidv1 = (
-                make_cid(image_dict["Hash"]).to_v1().encode("base32").decode("UTF-8")
-            )  # convert cidv1 reduce image load time
-            info_dict = {
-                "name": f"{NAME} #{index}",
-                "description": f"{DESCRIPTION}",
-                "image": f"https://{cidv1}.ipfs.dweb.link/",
-                "attributes": attributes,
-            }
-            info_json = json.dumps(info_dict)
-            with open(os.path.join(metadata_folder, str(index)), "w") as f:
-                f.write(info_json)
-        else:
-            print(f"row {idx} has image hash, skip")
+        print(path)
+        image_dict = next(
+            filter(
+                lambda i: os.path.join(image_folder, i["Name"]) == path,
+                image_ipfs_data,
+            ),
+            None,
+        )
+        cols = list(df.columns)[1:]  # exclude index
+        attributes = [{"value": col, "trait_type": row[col]} for col in cols]
+        cidv1 = (
+            make_cid(image_dict["Hash"]).to_v1().encode("base32").decode("UTF-8")
+        )  # convert cidv1 reduce image load time
+        info_dict = {
+            "name": f"{random.choice(NAMES)} #{index}",
+            "description": f"{DESCRIPTION}",
+            "image": f"https://{cidv1}.ipfs.dweb.link/",
+            "attributes": attributes,
+        }
+        info_json = json.dumps(info_dict)
+        with open(os.path.join(metadata_folder, str(index)), "w") as f:
+            f.write(info_json)
+
     print(f"save metadata complete")
 
     meta_root, _ = upload_folder(metadata_folder, "application/json")
     print(f"upload metadatas complete")
-    return (meta_root, start_count, start_count + len(df))
+    return (meta_root, start_count, start_count + len(df) - 1)
 
 
 if __name__ == "__main__":

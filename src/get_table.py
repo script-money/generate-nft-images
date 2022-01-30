@@ -3,32 +3,50 @@ from PIL import Image
 import pandas as pd
 import os
 import shutil
+from dotenv import load_dotenv
 
-# generate template
-W = 400
-H = 400
-EXTENSION = "png"
-PARTS = "./parts"
-IMAGES = "./images"
-METADATA = "./metadata"
-AMOUNT = 10
-NAME = "Double Letter"
-DESCRIPTION = "Double Letter For Test"
+load_dotenv()
+
+# FILL YOUR OWN CONFIG---------------------------------------------------------------------------------
+W = 400  # image width. pixel unit
+H = 400  # image height. pixel unit
+EXTENSION = ["PNG", "png"]  # image extensions
+PARTS_DICT = {
+    "parts": 0.9,
+    "parts2": 0.1,
+}  # if you have multiple groups images parts, set key as folder name, value is occurrence probability
+IMAGES = "./images"  # folder save generate images
+METADATA = "./metadata"  # folder save metadata
+AMOUNT = 30  # amount of images to generate
+NAMES = ["Double Letter", "Color Letter"]  # custom NFT names, random choice from list
+DESCRIPTION = "Double Letter For Test"  # custom NFT discription
+PROXIES = {
+    "http": "http://127.0.0.1:7890",
+    "https": "http://127.0.0.1:7890",
+}  # if in China, you need set proxy to access IPFS node
+PROJECT_ID = os.getenv(
+    "PROJECT_ID"
+)  # need to register ipfs of infura to get PROJECT_ID and PROJECT_SECRET, set them in .env
+PROJECT_SECRET = os.getenv("PROJECT_SECRET")  # same as previous line
+# ------------------------------------------------------------------------------------------------------
+
+FOLDERS = list(PARTS_DICT.keys())
+WEIGHTS = list(PARTS_DICT.values())
 
 # Iterate to get the material file
-def get_files_path(folder=PARTS):
+def get_files_path(folders=FOLDERS):
     files_path = []
-    for root, dirs, _ in os.walk(folder):
-        if root != PARTS:
-            for _, _, files in os.walk(root):
-                for file in files:
-                    if file != ".DS_Store":
-                        files_path.append(os.path.join(root, file))
+    for folder in folders:
+        for root, _, _ in os.walk(folder):
+            if root not in FOLDERS:
+                for _, _, files in os.walk(root):
+                    for file in files:
+                        if file != ".DS_Store":
+                            files_path.append(os.path.join(root, file))
     return files_path
 
 
 files_path = get_files_path()
-
 
 if __name__ == "__main__":
     # clean old folder
@@ -41,7 +59,7 @@ if __name__ == "__main__":
     # Validate image format and size
     for path in files_path:
         assert (
-            path.split(".")[-1] == EXTENSION
+            path.split(".")[-1] in EXTENSION
         ), f"{path}'s extension is not {EXTENSION} "
         im = Image.open(path)
         w, h = im.size
@@ -51,6 +69,7 @@ if __name__ == "__main__":
     # export tables
     attrs = [os.path.split(path) for path in files_path]
     d = {
+        "folder": [a[0].split("/")[-2] for a in attrs],
         "prop": [a[0].split("_")[1] for a in attrs],
         "value": [a[1].split(".")[0] for a in attrs],
         "ratio": 1,
