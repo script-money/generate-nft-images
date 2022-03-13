@@ -30,6 +30,16 @@ def upload_folder(
                 filter(lambda i: i.split(".")[-1] == "png", os.listdir(folder_name))
             )
         ]
+    elif content_type == "image/gif":
+        files = [
+            (
+                folder_name.split("/")[-1],
+                (file, open(os.path.join(folder_name, file), "rb"), content_type),
+            )
+            for file in list(
+                filter(lambda i: i.split(".")[-1] == "gif", os.listdir(folder_name))
+            )
+        ]
     elif content_type == "application/json":
         files = [
             (
