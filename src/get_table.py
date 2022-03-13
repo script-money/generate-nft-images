@@ -43,6 +43,7 @@ def get_files_path(folders=FOLDERS):
                     for file in files:
                         if file != ".DS_Store":
                             files_path.append(os.path.join(root, file))
+    files_path.sort()
     return files_path
 
 
