@@ -77,7 +77,7 @@ def generate_images(
     for i in range(amount):
         # avoid duplicate
         index = i + start_id
-        print(attributes)
+        attributes = random_attr()
         while attributes in used_attributes:
             attributes = random_attr()
         used_attributes.append(attributes)
