@@ -38,8 +38,15 @@ def random_attr():
         ).ratio.values
         cum_arr = np.cumsum(ratio_arr) - k
         first_index = next(x[0] for x in enumerate(cum_arr) if x[1] > 0)
-        value = df_pac.loc[(select_folder), (prop), :].index[first_index]
-        attributes.append({"value": value, "trait_type": prop})
+        value = df_pac.loc[(select_folder), (prop), :].index[
+            first_index
+        ]  # in pandas 1.4, loc is not return tuple but single element
+        if type(value) is str:
+            attributes.append(
+                {"value": (select_folder, prop, value), "trait_type": prop}
+            )
+        else:
+            attributes.append({"value": value, "trait_type": prop})
     return attributes
 
 
@@ -70,7 +77,7 @@ def generate_images(
     for i in range(amount):
         # avoid duplicate
         index = i + start_id
-        attributes = random_attr()
+        print(attributes)
         while attributes in used_attributes:
             attributes = random_attr()
         used_attributes.append(attributes)
