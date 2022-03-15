@@ -23,7 +23,7 @@ def upload_folder(
     if content_type == "image/png":
         files = [
             (
-                folder_name.split("/")[-1],
+                folder_name.split(os.sep)[-1],
                 (file, open(os.path.join(folder_name, file), "rb"), content_type),
             )
             for file in list(
@@ -33,7 +33,7 @@ def upload_folder(
     elif content_type == "image/gif":
         files = [
             (
-                folder_name.split("/")[-1],
+                folder_name.split(os.sep)[-1],
                 (file, open(os.path.join(folder_name, file), "rb"), content_type),
             )
             for file in list(
@@ -43,7 +43,7 @@ def upload_folder(
     elif content_type == "application/json":
         files = [
             (
-                folder_name.split("/")[-1],
+                folder_name.split(os.sep)[-1],
                 (file, open(os.path.join(folder_name, file), "rb"), content_type),
             )
             for file in list(filter(lambda i: "." not in i, os.listdir(folder_name)))

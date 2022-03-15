@@ -70,7 +70,7 @@ if __name__ == "__main__":
     # export tables
     attrs = [os.path.split(path) for path in files_path]
     d = {
-        "folder": [a[0].split("/")[-2] for a in attrs],
+        "folder": [a[0].split(os.sep)[-2] for a in attrs],
         "prop": [a[0].split("_")[1] for a in attrs],
         "value": [a[1].split(".")[0] for a in attrs],
         "ratio": 1,
