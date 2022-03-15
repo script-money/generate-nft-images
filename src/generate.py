@@ -82,19 +82,17 @@ def generate_images(
             attributes = random_attr()
         used_attributes.append(attributes)
         # Get the images to be read in the order of overlay
-        sorted_paths = sorted(
-            [
-                next(
-                    path
-                    for path in files_path
-                    if attr["trait_type"] in path.split(os.sep)[1]
-                    and attr["value"][2] in path.split(os.sep)[2]
-                )
-                for attr in attributes
-            ]
-        )
+        paths = [
+            next(
+                path
+                for path in files_path
+                if attr["trait_type"] in path.split(os.sep)[1]
+                and attr["value"][2] in path.split(os.sep)[2]
+            )
+            for attr in attributes
+        ]
         base_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        for path in sorted_paths:
+        for path in paths:
             img = Image.open(path, "r")
             base_img.paste(img, (0, 0), mask=img)
         # save images
