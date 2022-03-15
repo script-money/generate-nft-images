@@ -87,6 +87,7 @@ def generate_images(
                 path
                 for path in files_path
                 if attr["trait_type"] in path.split(os.sep)[1]
+                and attr["value"][0] in path.split(os.sep)[0]
                 and attr["value"][2] in path.split(os.sep)[2]
             )
             for attr in attributes
