@@ -6,6 +6,7 @@ import random
 from numpy.random import choice
 import os
 from get_table import files_path, W, H, AMOUNT, PARTS_DICT, FOLDERS, WEIGHTS
+from multiprocessing import Pool, cpu_count
 
 
 def get_ratio(x):
@@ -50,37 +51,24 @@ def random_attr():
     return attributes
 
 
-def generate_images(
-    df_csv: pd.DataFrame, amount: int, save_folder: str = "./images", start_id: int = 0
-) -> pd.DataFrame:
-    used_attributes = []
+used_attributes = {}
+save_folder: str = "./images"
+
+
+def generate_func(
+    start_index, end_index, start_id=0,
+):
     cols = ["path"] + [i["trait_type"] for i in random_attr()]
-    df_attr = pd.DataFrame(columns=cols)
-
-    prop_count_df = df_csv.groupby(["folder", "prop"]).count()
-    sum_count = 0
-    for _folder in FOLDERS:
-        folder_df = prop_count_df.query(f"folder == '{_folder}'")["ratio"]
-        max_count = folder_df.values.cumprod()[-1]
-        sum_count += max_count
-    assert (
-        amount <= sum_count
-    ), "Generate too much, there will be duplicate generation, should increase the number of material or reduce the total amount"
-    assert (
-        np.min(df_pac["ratio"]) * amount >= 1
-    ), "The number generated is too small to reflect the minimum probability and the total should be increased"
-    assert (
-        len(list(filter(lambda f: f.split(".")[1] == "png", os.listdir(save_folder))))
-        == 0
-    ), f"{save_folder} folder is not empty, backup the original data and tables first"
-
-    for i in range(amount):
+    df_batch = pd.DataFrame(columns=cols)
+    for i in range(start_index, end_index):
         # avoid duplicate
         index = i + start_id
         attributes = random_attr()
-        while attributes in used_attributes:
+        key = hash(str(attributes))
+        while key in used_attributes:
             attributes = random_attr()
-        used_attributes.append(attributes)
+            key = hash(str(attributes))
+        used_attributes[key] = attributes
         # Get the images to be read in the order of overlay
         paths = [
             next(
@@ -102,16 +90,54 @@ def generate_images(
         )
         base_img.save(os.path.join(save_folder, filename))
         # add porpety
-        df_attr = df_attr.append(
-            {"path": os.path.join(save_folder, filename)}
-            | {i["trait_type"]: i["value"][-1] for i in attributes},
-            ignore_index=True,
-        )
+        row_dict = {"path": os.path.join(save_folder, filename)} | {
+            i["trait_type"]: i["value"][-1] for i in attributes
+        }
+        new_row_df = pd.DataFrame.from_dict(row_dict, orient="index").T
+        df_batch = pd.concat([df_batch, new_row_df], ignore_index=True,)
+    return df_batch
 
-    df_attr[cols].to_csv(os.path.join(save_folder, "attr.csv"), index=False)
+
+def generate_images(
+    df_csv: pd.DataFrame, amount: int, save_folder: str = "./images", start_id: int = 0
+) -> pd.DataFrame:
+    prop_count_df = df_csv.groupby(["folder", "prop"]).count()
+    sum_count = 0
+    for _folder in FOLDERS:
+        folder_df = prop_count_df.query(f"folder == '{_folder}'")["ratio"]
+        max_count = folder_df.values.cumprod()[-1]
+        sum_count += max_count
+    assert (
+        amount <= sum_count
+    ), "Generate too much, there will be duplicate generation, should increase the number of material or reduce the total amount"
+    assert (
+        np.min(df_pac["ratio"]) * amount >= 1
+    ), "The number generated is too small to reflect the minimum probability and the total should be increased"
+    assert (
+        len(list(filter(lambda f: f.split(".")[1] == "png", os.listdir(save_folder))))
+        == 0
+    ), f"{save_folder} folder is not empty, backup the original data and tables first"
+
+    processes = cpu_count() - 1
+    pool = Pool(processes=processes)
+    start_end_indexs = list(
+        map(
+            lambda x: (
+                x * amount // processes,
+                (x + 1) * amount // processes,
+                start_id,
+            ),
+            range(processes),
+        )
+    )
+
+    df_attr = pool.starmap(generate_func, start_end_indexs)
+    pd.concat(df_attr, ignore_index=True).to_csv(
+        os.path.join(save_folder, "attr.csv"), index=False
+    )
     return df_attr
 
 
 if __name__ == "__main__":
-    generate_images(df_csv, AMOUNT, start_id=0)
+    generate_images(df_csv, AMOUNT, start_id=10)
     print("generate images in ./images folder success")
