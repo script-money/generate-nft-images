@@ -80,7 +80,7 @@ def generate_func(
             )
             for attr in attributes
         ]
-        base_img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        base_img = Image.new("RGB", (W, H), (0, 0, 0))
         for path in paths:
             img = Image.open(path, "r")
             base_img.paste(img, (0, 0), mask=img)
@@ -88,7 +88,9 @@ def generate_func(
         filename = (
             f"{index}-{'-'.join(list(map(lambda i: i['value'][-1] ,attributes)))}.png"
         )
-        base_img.save(os.path.join(save_folder, filename))
+        base_img.save(
+            os.path.join(save_folder, filename), format="jpeg", quality="medium",
+        )
         # add porpety
         row_dict = {"path": os.path.join(save_folder, filename)} | {
             i["trait_type"]: i["value"][-1] for i in attributes
