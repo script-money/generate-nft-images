@@ -55,4 +55,7 @@ if __name__ == "__main__":
         for k, v in percentages.items():
             df_pac.loc[df_pac.index.get_level_values("value") == k, "actual"] = v
 
-    print(df_pac)
+    with pd.option_context(
+        "display.max_rows", None, "display.max_columns", None, "display.precision", 4,
+    ):
+        print(df_pac)

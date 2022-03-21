@@ -20,6 +20,7 @@ METADATA = "./metadata"  # folder save metadata
 AMOUNT = 30  # amount of images to generate
 NAMES = ["Double Letter", "Color Letter"]  # custom NFT names, random choice from list
 DESCRIPTION = "Double Letter For Test"  # custom NFT discription
+START_ID = 1  # start id of generated images
 PROXIES = {
     "http": "http://127.0.0.1:7890",
     "https": "http://127.0.0.1:7890",
@@ -55,6 +56,7 @@ if __name__ == "__main__":
     for folder in folders:
         if os.path.exists(folder):
             shutil.rmtree(folder)
+            print(f"{folder} folder cleaned")
         os.mkdir(folder)
 
     # Validate image format and size
@@ -80,4 +82,6 @@ if __name__ == "__main__":
 
     if os.path.exists("ratio.csv"):
         print("generate table success!")
+        print("You can modify ratio.csv to change the ratio of each parts")
+        print("PS: Don't use Excel to save csv, use notepad instead")
 

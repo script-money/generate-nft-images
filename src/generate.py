@@ -5,7 +5,17 @@ import numpy as np
 import random
 from numpy.random import choice
 import os
-from get_table import files_path, W, H, AMOUNT, PARTS_DICT, FOLDERS, WEIGHTS
+from get_table import (
+    files_path,
+    W,
+    H,
+    AMOUNT,
+    PARTS_DICT,
+    FOLDERS,
+    WEIGHTS,
+    IMAGES,
+    START_ID,
+)
 from multiprocessing import Pool, cpu_count
 
 
@@ -52,7 +62,7 @@ def random_attr():
 
 
 used_attributes = {}
-save_folder: str = "./images"
+save_folder: str = IMAGES
 
 
 def generate_func(
@@ -101,7 +111,7 @@ def generate_func(
 
 
 def generate_images(
-    df_csv: pd.DataFrame, amount: int, save_folder: str = "./images", start_id: int = 0
+    df_csv: pd.DataFrame, amount: int, save_folder: str = "./images", start_id: int = 0,
 ) -> pd.DataFrame:
     prop_count_df = df_csv.groupby(["folder", "prop"]).count()
     sum_count = 0
@@ -141,5 +151,7 @@ def generate_images(
 
 
 if __name__ == "__main__":
-    generate_images(df_csv, AMOUNT, start_id=10)
-    print("generate images in ./images folder success")
+    print(f"generating... check images in {save_folder} folder")
+    print("PS: you can press Ctrl+C to stop the process")
+    generate_images(df_csv, AMOUNT, start_id=START_ID)
+    print(f"generate images in {save_folder} folder success")
