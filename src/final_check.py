@@ -2,7 +2,7 @@ import hashlib, os
 import pandas as pd
 import numpy as np
 from generate import random_attr, df_pac
-from get_table import IMAGES
+from get_table import IMAGES, START_ID
 
 
 def remove_duplicate_images(root: str):
@@ -25,7 +25,7 @@ def remove_duplicate_images(root: str):
 def generate_csv() -> pd.DataFrame:
     cols = ["index", "path"] + [i["trait_type"] for i in random_attr()]
     all_data = []
-    n = 0
+    n = START_ID
     for root, _, files in os.walk(IMAGES):
         for file in files:
             if os.path.splitext(file)[1] == ".png":

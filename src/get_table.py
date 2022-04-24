@@ -17,10 +17,12 @@ PARTS_DICT = {
 }  # if you have multiple groups images parts, set key as folder name, value is occurrence probability
 IMAGES = "./images"  # folder save generate images
 METADATA = "./metadata"  # folder save metadata
+BLINDBOX_DATA_FOLDER = "./blindbox"
 AMOUNT = 30  # amount of images to generate
 NAMES = ["Double Letter", "Color Letter"]  # custom NFT names, random choice from list
 DESCRIPTION = "Double Letter For Test"  # custom NFT discription
 START_ID = 1  # start id of generated images
+BLINDBOX_IMAGE = ""
 PROXIES = {
     "http": "http://127.0.0.1:7890",
     "https": "http://127.0.0.1:7890",

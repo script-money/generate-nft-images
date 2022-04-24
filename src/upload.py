@@ -11,7 +11,7 @@ from get_table import (
     PROJECT_SECRET,
 )
 import pandas as pd
-from final_check import RENAME_DF
+from final_check import RENAME_DF, START_ID
 from cid import make_cid
 import random
 
@@ -49,31 +49,21 @@ def upload_folder(
             for file in list(filter(lambda i: "." not in i, os.listdir(folder_name)))
         ]
     response = rq.post(
-        f"https://ipfs.infura.io:5001/api/v0/add?pin=false&recursive=true&wrap-with-directory=true",  # pin=true if want to pin files
+        f"https://ipfs.infura.io:5001/api/v0/add?pin=true&recursive=true&wrap-with-directory=true",  # pin=true if want to pin files
         files=files,
         auth=(PROJECT_ID, PROJECT_SECRET),
         proxies=PROXIES,
     )
 
-    upload_folder_res_list = response.text.split("\n")
-    assert len(files) + 2 == len(
-        upload_folder_res_list
-    ), f"Different number of successfully uploaded files and folders, \
-      need {len(files)+2}, return {len(upload_folder_res_list)}"
+    upload_folder_res_list = response.text.strip().split("\n")
     try:
         folder_hash = json.loads(
-            [
-                i
-                for i in upload_folder_res_list
-                if i != "" and json.loads(i)["Name"] == ""
-            ][0]
+            [i for i in upload_folder_res_list if json.loads(i)["Name"] == ""][0]
         )["Hash"]
     except:
         folder_hash = None
     images_dict_list = [
-        json.loads(i)
-        for i in upload_folder_res_list
-        if i != "" and json.loads(i)["Name"] != ""
+        json.loads(i) for i in upload_folder_res_list if json.loads(i)["Name"] != ""
     ]
     return (folder_hash, images_dict_list)
 
@@ -88,7 +78,6 @@ def generate_metadata_and_upload(
     for idx, row in df.iterrows():
         path = row["path"]
         index = idx + start_count
-        print(path)
         image_dict = next(
             filter(
                 lambda i: os.path.join(image_folder, i["Name"]) == path,
@@ -96,11 +85,20 @@ def generate_metadata_and_upload(
             ),
             None,
         )
+        if image_dict == None:
+            print(f"{path} not found in ipfs")
+            continue
         cols = list(df.columns)[1:]  # exclude index
-        attributes = [{"value": row[col], "trait_type": col} for col in cols]
+        attributes = [
+            {"value": row[col], "trait_type": col}
+            for col in cols
+            if row[col] != "empty"
+        ]
+
         cidv1 = (
             make_cid(image_dict["Hash"]).to_v1().encode("base32").decode("UTF-8")
         )  # convert cidv1 reduce image load time
+
         info_dict = {
             "name": f"{random.choice(NAMES)} #{index}",
             "description": f"{DESCRIPTION}",
@@ -122,8 +120,13 @@ if __name__ == "__main__":
     df = RENAME_DF
     image_ipfs_root, image_ipfs_data = upload_folder(IMAGES)
     print(f"image_ipfs_root: {image_ipfs_root}")
-    print(f"image_ipfs_data: {image_ipfs_data}")
-    tokenurl_hash, start, end = generate_metadata_and_upload(df, image_ipfs_data)
+    # backup file use for debug upload images data
+    with open("image_ipfs_data.backup", "w") as f:
+        f.write(json.dumps(image_ipfs_data))
+    print("save image_ipfs_data to image_ipfs_data.backup")
+    tokenurl_hash, start, end = generate_metadata_and_upload(
+        df, image_ipfs_data, START_ID
+    )
     print(
         f"Source url is {tokenurl_hash}, you can visit ipfs://{tokenurl_hash}/{start} to check"
     )
