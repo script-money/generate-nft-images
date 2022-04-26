@@ -17,15 +17,15 @@ PARTS_DICT = {
 }  # if you have multiple groups images parts, set key as folder name, value is occurrence probability
 IMAGES = "./images"  # folder save generate images
 METADATA = "./metadata"  # folder save metadata
-BLINDBOX_DATA_FOLDER = "./blindbox"
+MYSTERY_BOX_DATA_FOLDER = "./mystery_box_data"
 AMOUNT = 30  # amount of images to generate
 NAMES = ["Double Letter", "Color Letter"]  # custom NFT names, random choice from list
 DESCRIPTION = "Double Letter For Test"  # custom NFT discription
 START_ID = 1  # start id of generated images
-BLINDBOX_IMAGE = ""
+MYSTERY_BOX_IMAGE = ""  # upload mystery box image
 PROXIES = {
-    "http": "http://127.0.0.1:7890",
-    "https": "http://127.0.0.1:7890",
+    "http": "127.0.0.1:7890",
+    "https": "127.0.0.1:7890",
 }  # if in China, you need set proxy to access IPFS node
 PROJECT_ID = os.getenv(
     "PROJECT_ID"
