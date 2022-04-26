@@ -42,8 +42,15 @@ def generate_csv() -> pd.DataFrame:
     return df
 
 
-remove_duplicate_images(IMAGES)
-RENAME_DF = generate_csv()
+shuffle = False
+if shuffle:
+    # for new images, shuffle images and generate csv to images folder
+    remove_duplicate_images(IMAGES)
+    RENAME_DF = generate_csv()
+else:
+    # for exist images, read csv
+    RENAME_DF = pd.read_csv(os.path.join(IMAGES, "attr.csv"))
+
 
 if __name__ == "__main__":
     df_pac["actual"] = 0.0
@@ -52,10 +59,16 @@ if __name__ == "__main__":
         array = RENAME_DF[col]
         uniques, counts = np.unique(array, return_counts=True)
         percentages = dict(zip(uniques, counts / len(array)))
-        for k, v in percentages.items():
-            df_pac.loc[df_pac.index.get_level_values("value") == k, "actual"] = v
-
-    with pd.option_context(
-        "display.max_rows", None, "display.max_columns", None, "display.precision", 4,
-    ):
-        print(df_pac)
+        prop_df = pd.DataFrame.from_dict(percentages, orient="index", columns=[col])
+        with pd.option_context(
+            "display.max_rows",
+            None,
+            "display.max_columns",
+            None,
+            "display.precision",
+            4,
+            "display.float_format",
+            "{:.2%}".format,
+        ):
+            print(prop_df)
+        print("\n")
