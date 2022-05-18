@@ -2,31 +2,39 @@ import hashlib, os
 import pandas as pd
 import numpy as np
 from generate import random_attr, df_pac
-from get_table import IMAGES, START_ID
+from config import IMAGES, START_ID, CHECK_DUPLICATE_TRAITS_INDEX, SHUFFLE
 
 
-def remove_duplicate_images(root: str):
+def remove_duplicate_by_traits(
+    root: str, trait_col_index: list = CHECK_DUPLICATE_TRAITS_INDEX
+):
     file_list = list(filter(lambda f: f.split(".")[1] == "png", os.listdir(root)))
     duplicates = []
     hash_keys = dict()
     for index, filename in enumerate(file_list):
-        with open(os.path.join(root, filename), "rb") as f:
-            filehash = hashlib.md5(f.read()).hexdigest()
-        if filehash not in hash_keys:
-            hash_keys[filehash] = index
+        unique_traits_list = [filename.split("-")[i] for i in trait_col_index]
+        unique_traits = "-".join(unique_traits_list)
+        traits_hash = hashlib.sha1(unique_traits.encode("utf-8")).hexdigest()
+        if traits_hash not in hash_keys:
+            hash_keys[traits_hash] = index
         else:
-            duplicates.append((index, hash_keys[filehash]))
+            duplicates.append((index, hash_keys[traits_hash]))
     if len(duplicates) > 0:
-        print(f"have {len(duplicates)} duplicate images, deleted")
+        print(f"have {len(duplicates)} duplicate images by traits, deleted")
     for index in duplicates:
         os.remove(os.path.join(root, file_list[index[0]]))
 
 
-def generate_csv() -> pd.DataFrame:
+def generate_csv(sort=True) -> pd.DataFrame:
     cols = ["index", "path"] + [i["trait_type"] for i in random_attr()]
     all_data = []
     n = START_ID
     for root, _, files in os.walk(IMAGES):
+        files.sort(
+            key=lambda a: int(a.split("-")[0])
+            if a != "attr.csv" and a != ".DS_Store"
+            else 0
+        )
         for file in files:
             if os.path.splitext(file)[1] == ".png":
                 old_path = os.path.join(root, file)
@@ -36,20 +44,17 @@ def generate_csv() -> pd.DataFrame:
                 os.rename(old_path, path)
                 all_data.append([int(index), path, *args])
                 n += 1
-    all_data.sort(key=lambda i: i[0])
+    if sort:
+        all_data.sort(key=lambda i: i[0])
+    else:
+        print("images not sort")
     df = pd.DataFrame(all_data, columns=cols).drop(columns=["index"])
     df.to_csv(os.path.join(IMAGES, "attr.csv"), index=False)
     return df
 
 
-shuffle = False
-if shuffle:
-    # for new images, shuffle images and generate csv to images folder
-    remove_duplicate_images(IMAGES)
-    RENAME_DF = generate_csv()
-else:
-    # for exist images, read csv
-    RENAME_DF = pd.read_csv(os.path.join(IMAGES, "attr.csv"))
+remove_duplicate_by_traits(IMAGES)
+RENAME_DF = generate_csv(SHUFFLE)
 
 
 if __name__ == "__main__":

@@ -6,11 +6,12 @@ It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anacon
 
 1. `conda create --name generate python=3.9 pillow pandas requests`
 2. `conda activate generate`
-3. `pip install python-dotenv py-cid`
-4. put your images parts folder at project root. Then modify config in `get_table.py` 
+3. `pip install python-dotenv`
+4. modify configs in `src/config.py`
 5. run `python src/get_table.py`, this will generate a table called ratio.csv, you can modify probability of feature occurrence in the ratio column.
 6. (can skip) `python src/final_check.py`, remove the duplicates and view the current probability distribution, which can be adjusted again.
-7. `python src/upload.py` push data to IPFS via infura
+7. `python src/upload_mystery_box.py` push mystery box metadata to IPFS
+8. `python src/upload.py` push data to IPFS
 
 ## features
 
@@ -23,3 +24,5 @@ It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anacon
 - [x] Upload image: upload image and metadata to ipfs and generate hash of tokenURL
 
 - [x] Multiple folder support: Rare features can be placed in separate folders for generate
+
+- [x] Upload mystery box data: generate mystery box metadata and upload

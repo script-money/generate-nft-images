@@ -1,8 +1,12 @@
 .ipynb_checkpoints
 .DS_Store
 .env
-images/
+images*/
 metadata/
 __pycache__/
 ccr
 ratio.csv
+mystery_box_data/
+config-*.py
+*.zip
+image_ipfs_data.backup

@@ -1,40 +1,8 @@
 import os
 from PIL import Image
 import pandas as pd
-import os
 import shutil
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# FILL YOUR OWN CONFIG---------------------------------------------------------------------------------
-W = 400  # image width. pixel unit
-H = 400  # image height. pixel unit
-EXTENSION = ["PNG", "png"]  # image extensions
-PARTS_DICT = {
-    "parts": 0.9,
-    "parts2": 0.1,
-}  # if you have multiple groups images parts, set key as folder name, value is occurrence probability
-IMAGES = "./images"  # folder save generate images
-METADATA = "./metadata"  # folder save metadata
-MYSTERY_BOX_DATA_FOLDER = "./mystery_box_data"
-AMOUNT = 30  # amount of images to generate
-NAMES = ["Double Letter", "Color Letter"]  # custom NFT names, random choice from list
-DESCRIPTION = "Double Letter For Test"  # custom NFT discription
-START_ID = 1  # start id of generated images
-MYSTERY_BOX_IMAGE = ""  # upload mystery box image
-PROXIES = {
-    "http": "127.0.0.1:7890",
-    "https": "127.0.0.1:7890",
-}  # if in China, you need set proxy to access IPFS node
-PROJECT_ID = os.getenv(
-    "PROJECT_ID"
-)  # need to register ipfs of infura to get PROJECT_ID and PROJECT_SECRET, set them in .env
-PROJECT_SECRET = os.getenv("PROJECT_SECRET")  # same as previous line
-# ------------------------------------------------------------------------------------------------------
-
-FOLDERS = list(PARTS_DICT.keys())
-WEIGHTS = list(PARTS_DICT.values())
+from config import FOLDERS, EXTENSION, W, H
 
 # Iterate to get the material file
 def get_files_path(folders=FOLDERS):

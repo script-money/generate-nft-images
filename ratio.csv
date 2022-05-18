@@ -1,33 +1,33 @@
 folder,prop,value,ratio
 parts,Background,blue,1
 parts,Background,green,1
-parts,Background,white,1
-parts,Background,red,1
 parts,Background,purple,1
-parts,First Latter,K,1
-parts,First Latter,J,1
-parts,First Latter,H,1
-parts,First Latter,I,1
+parts,Background,red,1
+parts,Background,white,1
+parts,Second Letter,A,1
+parts,Second Letter,Q,1
+parts,Second Letter,R,1
+parts,Second Letter,T,1
+parts,Second Letter,V,1
+parts,Second Letter,W,1
+parts,Second Letter,X,1
+parts,Second Letter,Y,1
+parts,Second Letter,Z,1
+parts,Second Letter,p,1
 parts,First Latter,B,1
 parts,First Latter,C,1
 parts,First Latter,D,1
 parts,First Latter,E,1
-parts,First Latter,G,1
 parts,First Latter,F,1
-parts,Second Letter,Z,1
-parts,Second Letter,Y,1
-parts,Second Letter,X,1
-parts,Second Letter,T,1
-parts,Second Letter,V,1
-parts,Second Letter,A,1
-parts,Second Letter,W,1
-parts,Second Letter,R,1
-parts,Second Letter,p,1
-parts,Second Letter,Q,1
+parts,First Latter,G,1
+parts,First Latter,H,1
+parts,First Latter,I,1
+parts,First Latter,J,1
+parts,First Latter,K,1
 parts2,Background,black,1
-parts2,First Latter,empty,1
-parts2,First Latter,2,1
-parts2,First Latter,3,1
-parts2,First Latter,1,1
 parts2,Second Letter,empty,1
 parts2,Second Letter,¥,1
+parts2,First Latter,1,1
+parts2,First Latter,2,1
+parts2,First Latter,3,1
+parts2,First Latter,empty,1

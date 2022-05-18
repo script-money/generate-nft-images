@@ -1,10 +1,11 @@
-from get_table import (
+from config import (
     AMOUNT,
     NAMES,
     DESCRIPTION,
     START_ID,
-    MYSTERY_BOX_IMAGE,
     MYSTERY_BOX_DATA_FOLDER,
+    MYSTERY_BOX_IMAGE,
+    UPLOAD_MYSTERY_BOX_METADATA,
 )
 import random
 import json
@@ -13,6 +14,8 @@ from upload import upload_folder
 
 
 def generate_mystery_box_metadata():
+    if not os.path.exists(MYSTERY_BOX_DATA_FOLDER):
+        os.mkdir(MYSTERY_BOX_DATA_FOLDER)
     for index in range(START_ID, AMOUNT + START_ID):
         info_dict = {
             "name": f"{random.choice(NAMES)} #{index}",
@@ -26,6 +29,7 @@ def generate_mystery_box_metadata():
 
 
 if __name__ == "__main__":
-    # generate_mystery_box_metadata()
-    metadata_root, _ = upload_folder(MYSTERY_BOX_DATA_FOLDER, "application/json")
-    print(f"upload blind data complete, hash is {metadata_root}")
+    generate_mystery_box_metadata()
+    if UPLOAD_MYSTERY_BOX_METADATA:
+        metadata_root, _ = upload_folder(MYSTERY_BOX_DATA_FOLDER, "application/json")
+        print(f"upload mystery box data complete, hash is {metadata_root}")
