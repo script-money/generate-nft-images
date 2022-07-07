@@ -26,6 +26,22 @@ def get_ratio(x):
     return custom_ratio * folder_ratio
 
 
+def has_transparency(img):
+    if img.info.get("transparency", None) is not None:
+        return True
+    if img.mode == "P":
+        transparent = img.info.get("transparency", -1)
+        for _, index in img.getcolors():
+            if index == transparent:
+                return True
+    elif img.mode == "RGBA":
+        extrema = img.getextrema()
+        if extrema[3][0] < 255:
+            return True
+
+    return False
+
+
 # modify table data first
 df_csv = pd.read_csv("./ratio.csv")
 df_group = df_csv.groupby(["folder", "prop", "value"]).apply(get_ratio).to_frame()
@@ -93,6 +109,8 @@ def generate_func(
         base_img = Image.new("RGB", (W, H), (0, 0, 0))
         for path in paths:
             img = Image.open(path, "r")
+            if not has_transparency(img):
+                img = img.convert("RGBA")
             base_img.paste(img, (0, 0), mask=img)
         # save images
         filename = (
