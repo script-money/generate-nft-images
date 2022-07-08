@@ -54,6 +54,12 @@ if __name__ == "__main__":
         assert w == W, f"{path} width not equal {W}"
         assert h == H, f"{path} height not equal {H}"
 
+    # Validate path name has -
+    for path in files_path:
+        assert (
+            "-" not in path.split("/")[-1]
+        ), f"{path} is invalid, files should not have '-' symbol"
+
     # export tables
     attrs = [os.path.split(path) for path in files_path]
     d = {
