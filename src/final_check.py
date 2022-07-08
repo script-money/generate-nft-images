@@ -12,7 +12,14 @@ def remove_duplicate_by_traits(
     duplicates = []
     hash_keys = dict()
     for index, filename in enumerate(file_list):
-        unique_traits_list = [filename.split("-")[i] for i in trait_col_index]
+        if len(trait_col_index) == 0:
+            trait_col_index = [i + 1 for i in range(len(df_pac.index.levels[1]))]
+        try:
+            unique_traits_list = [filename.split("-")[i] for i in trait_col_index]
+        except:
+            print(f"{filename} is not valid")
+            print(f"{trait_col_index} is not valid")
+            break
         unique_traits = "-".join(unique_traits_list)
         traits_hash = hashlib.sha1(unique_traits.encode("utf-8")).hexdigest()
         if traits_hash not in hash_keys:
@@ -21,6 +28,8 @@ def remove_duplicate_by_traits(
             duplicates.append((index, hash_keys[traits_hash]))
     if len(duplicates) > 0:
         print(f"have {len(duplicates)} duplicate images by traits, deleted")
+    else:
+        print("no duplicate images by traits")
     for index in duplicates:
         os.remove(os.path.join(root, file_list[index[0]]))
 

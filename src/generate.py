@@ -1,4 +1,5 @@
 import os
+from typing import List
 from PIL import Image
 import pandas as pd
 import numpy as np
@@ -15,6 +16,8 @@ from config import (
     QUALITY,
     AMOUNT,
     START_ID,
+    EXTENSION,
+    ROOT_DIR,
 )
 from multiprocessing import Pool, cpu_count
 
@@ -140,8 +143,9 @@ def generate_images(
     assert (
         amount <= sum_count
     ), "Generate too much, there will be duplicate generation, should increase the number of material or reduce the total amount"
+    min_ratio_except_zero = np.min(df_pac[df_pac["ratio"] > 0].ratio.values)
     assert (
-        np.min(df_pac["ratio"]) * amount >= 1
+        min_ratio_except_zero * amount >= 1
     ), "The number generated is too small to reflect the minimum probability and the total should be increased"
     assert (
         len(list(filter(lambda f: f.split(".")[1] == "png", os.listdir(save_folder))))
@@ -166,6 +170,61 @@ def generate_images(
         os.path.join(save_folder, "attr.csv"), index=False
     )
     return df_attr
+
+
+def check_values_valid(df: pd.DataFrame, select_columns: List, all_values: List):
+    values_to_check_df = df[list(select_columns)]
+    all_values = list(df_group.index.levels[2])
+    # loop rows if the value is not in the all_values, raise error
+    for i, row in values_to_check_df.iterrows():
+        for prop in props:
+            if row[prop] not in all_values:
+                raise ValueError(
+                    f'"{row[prop]}" is not valid prop at row "{i}" & column "{prop}"'
+                )
+
+
+def generate_images_from_old_ratio_csv(csv_path: str):
+    modified_csv = pd.read_csv(csv_path)
+    all_values = list(df_group.index.levels[2])
+    check_values_valid(modified_csv, props, all_values)
+    df_batch = pd.DataFrame()
+    assert (
+        len(list(filter(lambda f: f.split(".")[1] == "png", os.listdir(save_folder))))
+        == 0
+    ), f"{save_folder} folder is not empty, backup the original data and tables first"
+
+    # loop modified_csv and generate images
+    for index, row in modified_csv.iterrows():
+        attributes = []
+        base_img = Image.new("RGB", (W, H), (0, 0, 0))
+        for prop_index, prop in enumerate(props):
+            for folder in FOLDERS:
+                for ext in EXTENSION:
+                    path = os.path.join(
+                        ROOT_DIR,
+                        folder,
+                        f"0{prop_index+1}_{prop}",
+                        f"{row[prop]}.{ext}",
+                    )
+
+                    if os.path.exists(path):
+                        img = Image.open(path, "r")
+                        if not has_transparency(img):
+                            img = img.convert("RGBA")
+                        base_img.paste(img, (0, 0), mask=img)
+                        if (prop_index, row[prop],) not in attributes:
+                            attributes.append((prop_index, row[prop]))
+        # save images
+        filename = f"{index}-{'-'.join(map(lambda t: t[1],attributes))}.png"
+        save_path = os.path.join(save_folder, filename)
+        base_img.save(save_path, format="jpeg", quality=QUALITY)
+        # add porpety
+        row_dict = {"path": save_path} | {prop: row[prop] for prop in props}
+        new_row_df = pd.DataFrame.from_dict(row_dict, orient="index").T
+        df_batch = pd.concat([df_batch, new_row_df], ignore_index=True,)
+
+    df_batch.to_csv(os.path.join(save_folder, "attr.csv"), index=False)
 
 
 if __name__ == "__main__":

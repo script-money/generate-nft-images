@@ -9,4 +9,5 @@ ratio.csv
 mystery_box_data/
 config-*.py
 *.zip
-image_ipfs_data.backup
+*.backup
+*.ipynb

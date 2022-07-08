@@ -1,8 +1,10 @@
 import os
 from enum import Enum
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
+ROOT_DIR = Path(__file__).parent.parent
 
 # get_table-------------------------------------------------------------------------------------------
 EXTENSION = ["PNG", "png"]  # image extensions
@@ -20,11 +22,9 @@ WEIGHTS = list(PARTS_DICT.values())
 
 
 # final_check-----------------------------------------------------------------------------------------
-CHECK_DUPLICATE_TRAITS_INDEX = [
-    1,
-    2,
-    3,
-]  # attribute columns index used in the check duplicate, start from 1
+CHECK_DUPLICATE_TRAITS_INDEX = (
+    []
+)  # attribute columns index used in the check duplicate, start from 1
 SHUFFLE = False  # shuffle the images when check ratio
 # ----------------------------------------------------------------------------------------------------
 
