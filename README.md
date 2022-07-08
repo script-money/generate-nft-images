@@ -10,8 +10,8 @@ It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anacon
 4. modify configs in `src/config.py`
 5. run `python src/get_table.py`, this will generate a table called ratio.csv, you can modify probability of feature occurrence in the ratio column.
 6. run `python src/generate.py` to generate images.
-7. (can skip) `python src/final_check.py`, remove the duplicates and view the current probability distribution, which can be adjusted again.
-8. `python src/upload_mystery_box.py` push mystery box metadata to IPFS
+7. `python src/final_check.py`, remove the duplicates and view the current probability distribution, which can be adjusted again.
+8. (can skip) `python src/upload_mystery_box.py` push mystery box metadata to IPFS
 9. `python src/upload.py` push data to IPFS
 
 ## features
@@ -28,4 +28,4 @@ It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anacon
 
 - [x] Upload mystery box data: generate mystery box metadata and upload
 
-- [x] Generate images by attr.csv, it's use for update old images 
+- [x] Generate images by attr.csv, it's use for update old images

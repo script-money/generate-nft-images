@@ -22,7 +22,44 @@ from config import (
 from multiprocessing import Pool, cpu_count
 
 
+def random_attr():
+    """
+    helper function to generate random attributes
+
+    Returns:
+        List: [{"value": value, "trait_type": prop}]
+    """
+    attributes = []
+    select_folder = choice(FOLDERS, p=WEIGHTS)
+    for prop in props:
+        k = random.random()
+        ratio_arr = df_pac.query(
+            f"(folder == '{select_folder}') & (prop == '{prop}')"
+        ).ratio.values
+        cum_arr = np.cumsum(ratio_arr) - k
+        first_index = next(x[0] for x in enumerate(cum_arr) if x[1] > 0)
+        value = df_pac.loc[(select_folder), (prop), :].index[
+            first_index
+        ]  # in pandas 1.4, loc is not return tuple but single element
+        if type(value) is str:
+            attributes.append(
+                {"value": (select_folder, prop, value), "trait_type": prop}
+            )
+        else:
+            attributes.append({"value": value, "trait_type": prop})
+    return attributes
+
+
 def get_ratio(x):
+    """
+    helper function to get ratio of each folder
+
+    Args:
+        x (DataFrame): dataframe containing folder and ratio
+
+    Returns:
+          float: possibility of each trait
+    """
     folder_name = x["folder"].values[0]
     custom_ratio = x["ratio"].values[0]
     folder_ratio = PARTS_DICT[folder_name]
@@ -45,48 +82,20 @@ def has_transparency(img):
     return False
 
 
-# modify table data first
-df_csv = pd.read_csv("./ratio.csv")
-df_group = df_csv.groupby(["folder", "prop", "value"]).apply(get_ratio).to_frame()
-df_pac = (
-    df_group.groupby(level=["folder", "prop"])
-    .apply(lambda x: x / float(x.sum()))
-    .rename(columns={0: "ratio"})
-)
-
-
-props = df_csv["prop"].unique()
-
-# get random attributes
-def random_attr():
-    attributes = []
-    select_folder = choice(FOLDERS, p=WEIGHTS)
-    for prop in props:
-        k = random.random()
-        ratio_arr = df_pac.query(
-            f"(folder == '{select_folder}') & (prop == '{prop}')"
-        ).ratio.values
-        cum_arr = np.cumsum(ratio_arr) - k
-        first_index = next(x[0] for x in enumerate(cum_arr) if x[1] > 0)
-        value = df_pac.loc[(select_folder), (prop), :].index[
-            first_index
-        ]  # in pandas 1.4, loc is not return tuple but single element
-        if type(value) is str:
-            attributes.append(
-                {"value": (select_folder, prop, value), "trait_type": prop}
-            )
-        else:
-            attributes.append({"value": value, "trait_type": prop})
-    return attributes
-
-
-used_attributes = {}
-save_folder: str = IMAGES
-
-
 def generate_func(
     start_index, end_index, start_id=0,
 ):
+    """
+    generate images function single process
+
+    Args:
+        start_index (_type_): start index
+        end_index (_type_): end index
+        start_id (int, optional): which index start. Defaults to 0.
+
+    Returns:
+        pd.DataFrame: generated dataframe by this process
+    """
     cols = ["path"] + [i["trait_type"] for i in random_attr()]
     df_batch = pd.DataFrame(columns=cols)
     for i in range(start_index, end_index):
@@ -134,6 +143,18 @@ def generate_func(
 def generate_images(
     df_csv: pd.DataFrame, amount: int, save_folder: str = "./images", start_id: int = 0,
 ) -> pd.DataFrame:
+    """
+    generate images main function, check prequisites and generate images in parallel
+
+    Args:
+        df_csv (pd.DataFrame): source dataframe to use
+        amount (int): image amount to generate
+        save_folder (str, optional): images save folder. Defaults to "./images".
+        start_id (int, optional): which index start. Defaults to 0.
+
+    Returns:
+        pd.DataFrame: all generated images with save to attr.csv and return
+    """
     prop_count_df = df_csv.groupby(["folder", "prop"]).count()
     sum_count = 0
     for _folder in FOLDERS:
@@ -173,6 +194,17 @@ def generate_images(
 
 
 def check_values_valid(df: pd.DataFrame, select_columns: List, all_values: List):
+    """
+    Check selected column values is in the list
+
+    Args:
+        df (pd.DataFrame): DataFrame to check
+        select_columns (List): columns to check
+        all_values (List): possible values
+
+    Raises:
+        ValueError: if data invalid (is not in all_values)
+    """
     values_to_check_df = df[list(select_columns)]
     all_values = list(df_group.index.levels[2])
     # loop rows if the value is not in the all_values, raise error
@@ -184,7 +216,15 @@ def check_values_valid(df: pd.DataFrame, select_columns: List, all_values: List)
                 )
 
 
-def generate_images_from_old_ratio_csv(csv_path: str):
+def generate_images_from_attr_csv(csv_path: str):
+    """ 
+    This function use for modify same images already generated
+    You should use attr.csv in images folder as csv_path
+    Change some value in csv then run this function
+
+    Args:
+        csv_path (str): use attr.csv in images folder
+    """
     modified_csv = pd.read_csv(csv_path)
     all_values = list(df_group.index.levels[2])
     check_values_valid(modified_csv, props, all_values)
@@ -227,9 +267,24 @@ def generate_images_from_old_ratio_csv(csv_path: str):
     df_batch.to_csv(os.path.join(save_folder, "attr.csv"), index=False)
 
 
+df_csv = pd.read_csv("./ratio.csv")
+df_group = df_csv.groupby(["folder", "prop", "value"]).apply(get_ratio).to_frame()
+df_pac = (
+    df_group.groupby(level=["folder", "prop"])
+    .apply(lambda x: x / float(x.sum()))
+    .rename(columns={0: "ratio"})
+)
+props = df_csv["prop"].unique()
+used_attributes = {}
+save_folder: str = IMAGES
+
+
 if __name__ == "__main__":
     print(f"generating... check images in {save_folder} folder")
     print(f"quality is {QUALITY}")
     print("PS: you can press Ctrl+C to stop the process")
     generate_images(df_csv, AMOUNT, start_id=START_ID)
-    print(f"generate images in {save_folder} folder success")
+    print(f"generate {AMOUNT} images in {save_folder} folder success")
+
+    # if you want to modify images already generated, use this function
+    # generate_images_from_attr_csv('images/attr.csv')

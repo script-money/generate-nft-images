@@ -21,6 +21,16 @@ import random
 def upload_folder(
     folder_name: str, content_type: str = "image/png"
 ) -> tuple[str, list[dict]]:
+    """
+    upload folder to ipfs
+
+    Args:
+        folder_name (str): folder name to upload
+        content_type (str, optional): mime file type. Defaults to "image/png".
+
+    Returns:
+        tuple[str, list[dict]]: (folder_hash, images_dict_list)
+    """
     files = []
     if content_type == "image/png":
         files = [
@@ -77,13 +87,26 @@ def upload_folder(
 def generate_metadata(
     df: pd.DataFrame,
     image_ipfs_data: dict,
-    start_count: int = 0,
+    start_id: int = 0,
     image_folder: str = IMAGES,
     metadata_folder: str = METADATA,
-) -> tuple[str, int, int]:
+) -> tuple[int, int]:
+    """
+    generate metadata for images
+
+    Args:
+        df (pd.DataFrame): imagepath and metadata dataframe in final_check.py
+        image_ipfs_data (dict): image ipfs data from upload_folder
+        start_id (int, optional): start index. Defaults to 0.
+        image_folder (str, optional): images folder to use compare. Defaults to IMAGES.
+        metadata_folder (str, optional): metadata save folder. Defaults to METADATA.
+
+    Returns:
+        tuple[int, int]: (start_id, end_id)
+    """
     for idx, row in df.iterrows():
         path = row["path"]
-        index = idx + start_count
+        index = idx + start_id
         image_dict = next(
             filter(
                 lambda i: os.path.join(image_folder, i["Name"]) == path,
@@ -112,14 +135,7 @@ def generate_metadata(
         with open(os.path.join(metadata_folder, str(index)), "w") as f:
             f.write(info_json)
 
-    return (start_count, start_count + len(df) - 1)
-
-
-def upload_metadata(metadata_folder: str = METADATA):
-    print("uploading metadata")
-    meta_root, _ = upload_folder(metadata_folder, "application/json")
-    print(f"upload metadatas complete")
-    return meta_root
+    return (start_id, start_id + len(df) - 1)
 
 
 if __name__ == "__main__":
@@ -140,7 +156,9 @@ if __name__ == "__main__":
     print(f"Generate metadata complete, Index from {start} to {end}")
 
     if UPLOAD_METADATA:
-        token_uri_hash = upload_metadata()
+        print("uploading metadata")
+        metadata_root, _ = upload_folder(METADATA, "application/json")
+        print(f"upload metadatas complete")
         print(
-            f"Source url is {token_uri_hash}, you can visit ipfs://{token_uri_hash}/{start} to check"
+            f"Source url is {metadata_root}, you can visit ipfs://{metadata_root}/{start} to check"
         )

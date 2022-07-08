@@ -4,8 +4,17 @@ import pandas as pd
 import shutil
 from config import FOLDERS, EXTENSION, W, H
 
-# Iterate to get the material file
+
 def get_files_path(folders=FOLDERS):
+    """
+    helper function to get source layer files path
+
+    Args:
+        folders (str, optional): root folder save source layer files. Defaults to FOLDERS.
+
+    Returns:
+        List[str]: all source layer files path
+    """
     files_path = []
     for folder in folders:
         for root, _, _ in os.walk(folder):

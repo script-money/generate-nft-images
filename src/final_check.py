@@ -5,15 +5,21 @@ from generate import random_attr, df_pac
 from config import IMAGES, START_ID, CHECK_DUPLICATE_TRAITS_INDEX, SHUFFLE
 
 
-def remove_duplicate_by_traits(
-    root: str, trait_col_index: list = CHECK_DUPLICATE_TRAITS_INDEX
-):
+def remove_duplicate_by_traits(trait_col_index: list = [], root: str = IMAGES):
+    """
+    remove duplicate images by traits
+
+    Args:
+        root (str, optional): root folder of images. Defaults to IMAGES.
+        trait_col_index (list, optional): column indexes to check, if list is empty, compare all columns. Defaults to [].
+    """
+    if len(trait_col_index) == 0:
+        trait_col_index = [i + 1 for i in range(len(df_pac.index.levels[1]))]
+
     file_list = list(filter(lambda f: f.split(".")[1] == "png", os.listdir(root)))
     duplicates = []
     hash_keys = dict()
     for index, filename in enumerate(file_list):
-        if len(trait_col_index) == 0:
-            trait_col_index = [i + 1 for i in range(len(df_pac.index.levels[1]))]
         try:
             unique_traits_list = [filename.split("-")[i] for i in trait_col_index]
         except:
@@ -27,14 +33,24 @@ def remove_duplicate_by_traits(
         else:
             duplicates.append((index, hash_keys[traits_hash]))
     if len(duplicates) > 0:
-        print(f"have {len(duplicates)} duplicate images by traits, deleted")
+        print(f"have {len(duplicates)} duplicate images by traits, deleted.")
     else:
         print("no duplicate images by traits")
     for index in duplicates:
         os.remove(os.path.join(root, file_list[index[0]]))
+    print(f"Remain {len(file_list)} images")
 
 
 def generate_csv(sort=True) -> pd.DataFrame:
+    """
+    generate csv file from image files
+
+    Args:
+        sort (bool, optional): resort file by index. Defaults to True.
+
+    Returns:
+        pd.DataFrame: resorted dataframe
+    """
     cols = ["index", "path"] + [i["trait_type"] for i in random_attr()]
     all_data = []
     n = START_ID
@@ -62,11 +78,11 @@ def generate_csv(sort=True) -> pd.DataFrame:
     return df
 
 
-remove_duplicate_by_traits(IMAGES)
 RENAME_DF = generate_csv(SHUFFLE)
 
 
 if __name__ == "__main__":
+    remove_duplicate_by_traits(CHECK_DUPLICATE_TRAITS_INDEX)
     df_pac["actual"] = 0.0
     # show porperty ratio, if not satisfied, delete some or regenerate
     for col in [i["trait_type"] for i in random_attr()]:
@@ -74,6 +90,7 @@ if __name__ == "__main__":
         uniques, counts = np.unique(array, return_counts=True)
         percentages = dict(zip(uniques, counts / len(array)))
         prop_df = pd.DataFrame.from_dict(percentages, orient="index", columns=[col])
+        print("\n")
         with pd.option_context(
             "display.max_rows",
             None,

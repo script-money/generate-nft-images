@@ -14,6 +14,9 @@ from upload import upload_folder
 
 
 def generate_mystery_box_metadata():
+    """
+    generate metadata for mystery box
+    """
     if not os.path.exists(MYSTERY_BOX_DATA_FOLDER):
         os.mkdir(MYSTERY_BOX_DATA_FOLDER)
     for index in range(START_ID, AMOUNT + START_ID):
