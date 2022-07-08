@@ -17,9 +17,15 @@ def get_files_path(folders=FOLDERS):
     """
     files_path = []
     for folder in folders:
+        assert os.path.exists(
+            folder
+        ), f"{folder} folder does not exist, please check PARTS_DICT in config.py"
         for root, _, _ in os.walk(folder):
             if root not in FOLDERS:
                 for _, _, files in os.walk(root):
+                    assert (
+                        len(files) > 0
+                    ), f"{root} is empty, if you don't want to use this trait, please add an empty.png in this folder"
                     for file in files:
                         if file != ".DS_Store":
                             files_path.append(os.path.join(root, file))
