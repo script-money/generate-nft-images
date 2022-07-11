@@ -280,7 +280,7 @@ save_folder: str = IMAGES
 
 
 if __name__ == "__main__":
-    print(f"generating... check images in {save_folder} folder")
+    print(f"generating/... check images in {save_folder} folder")
     print(f"quality is {QUALITY}")
     print("PS: you can press Ctrl+C to stop the process")
     generate_images(df_csv, AMOUNT, start_id=START_ID)
