@@ -1,5 +1,5 @@
 import os
-import requests as rq
+import httpx
 import json
 from config import (
     IMAGES,
@@ -60,28 +60,29 @@ def upload_folder(
             )
             for file in list(filter(lambda i: "." not in i, os.listdir(folder_name)))
         ]
-    response = rq.post(
-        f"https://ipfs.infura.io:5001/api/v0/add?pin={'true' if PIN_FILES else 'false'}&recursive=true&wrap-with-directory=true",  # pin=true if want to pin files
-        files=files,
-        auth=(PROJECT_ID, PROJECT_SECRET),
-        proxies=PROXIES,
-    )
-    upload_folder_res_list = response.text.strip().split("\n")
-    if (
-        upload_folder_res_list[0]
-        == "basic auth failure: invalid project id or project secret"
-    ):
-        assert False, "invalid project id or project secret"
-    try:
-        folder_hash = json.loads(
-            [i for i in upload_folder_res_list if json.loads(i)["Name"] == ""][0]
-        )["Hash"]
-    except:
-        folder_hash = None
-    images_dict_list = [
-        json.loads(i) for i in upload_folder_res_list if json.loads(i)["Name"] != ""
-    ]
-    return (folder_hash, images_dict_list)
+
+    with httpx.Client(proxies=PROXIES) as client:
+        response = client.post(
+            f"https://ipfs.infura.io:5001/api/v0/add?pin={'true' if PIN_FILES else 'false'}&recursive=true&wrap-with-directory=true",  # pin=true if want to pin files
+            files=files,
+            auth=(PROJECT_ID, PROJECT_SECRET),
+        )
+        upload_folder_res_list = response.text.strip().split("\n")
+        if (
+            upload_folder_res_list[0]
+            == "basic auth failure: invalid project id or project secret"
+        ):
+            assert False, "invalid project id or project secret"
+        try:
+            folder_hash = json.loads(
+                [i for i in upload_folder_res_list if json.loads(i)["Name"] == ""][0]
+            )["Hash"]
+        except:
+            folder_hash = None
+        images_dict_list = [
+            json.loads(i) for i in upload_folder_res_list if json.loads(i)["Name"] != ""
+        ]
+        return (folder_hash, images_dict_list)
 
 
 def generate_metadata(
