@@ -64,8 +64,8 @@ READ_IMAGES = False  # if read images from image_ipfs_data.backup, set True
 UPLOAD_METADATA = False  # set False if don't want to upload metadata
 PIN_FILES = False  # if want to upload permanently, set to True
 PROXIES = {
-    "http": "127.0.0.1:7890",
-    "https": "127.0.0.1:7890",
+    "http://": "http://127.0.0.1:7890",
+    "https://": "http://127.0.0.1:7890",
 }  # if in China, you need set proxy to access IPFS node
 PROJECT_ID = os.getenv(
     "PROJECT_ID"
