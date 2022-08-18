@@ -13,6 +13,7 @@ It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anacon
 7. `python src/final_check.py`, remove the duplicates and view the current probability distribution, which can be adjusted again.
 8. (can skip) `python src/upload_mystery_box.py` push mystery box metadata to IPFS
 9. `python src/upload.py` push data to IPFS
+10. (if need) `python src/fresh_metadata.py` to refresh opensea metadata to show new images
 
 ## features
 
@@ -29,6 +30,8 @@ It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anacon
 - [x] Upload mystery box data: generate mystery box metadata and upload
 
 - [x] Generate images by attr.csv, it's use for update old images
+
+- [x] Refresh metadata: query ipfs and opensea api to refresh metadata, need opensea apikey
 
 ## discuss
 
