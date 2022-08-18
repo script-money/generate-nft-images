@@ -73,3 +73,9 @@ PROJECT_ID = os.getenv(
 PROJECT_SECRET = os.getenv("PROJECT_SECRET")  # same as previous line
 # ----------------------------------------------------------------------------------------------------
 
+
+# fresh_metadata--------------------------------------------------------------------------------------
+BASEURL = "ipfs://Qxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/"
+CONTRACT = "0x8888888888888888888888888888888888888888"
+ID_TO_REFRESH = []  # if empty will refresh all
+OPENSEA_KEY = os.getenv("OPENSEA_KEY")  # same as previous line

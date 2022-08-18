@@ -11,3 +11,4 @@ config-*.py
 *.zip
 *.backup
 *.ipynb
+.vscode/
