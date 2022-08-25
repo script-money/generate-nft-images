@@ -45,14 +45,22 @@ if __name__ == "__main__":
         os.mkdir(folder)
 
     # Validate image format and size
+    error = 0
     for path in files_path:
-        assert (
-            path.split(".")[-1] in EXTENSION
-        ), f"{path}'s extension is not {EXTENSION} "
-        im = Image.open(path)
-        w, h = im.size
-        assert w == W, f"{path} width not equal {W}"
-        assert h == H, f"{path} height not equal {H}"
+        try:
+            assert (
+                path.split(".")[-1] in EXTENSION
+            ), f"{path}'s extension is not {EXTENSION} "
+            im = Image.open(path)
+            w, h = im.size
+            assert w == W, f"{path} width not equal {W}"
+            assert h == H, f"{path} height not equal {H}"
+        except Exception as e:
+            print(e)
+            error += 1
+    if error != 0:
+        print(f"{error} images have error, fix and try again")
+        exit()
 
     # Validate path name has -
     for path in files_path:
