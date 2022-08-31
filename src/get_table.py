@@ -2,7 +2,7 @@ import os
 from PIL import Image
 import pandas as pd
 import shutil
-from config import FOLDERS, EXTENSION, W, H
+from config import FOLDERS, EXTENSION, W, H, WEIGHTS
 
 
 def get_files_path(folders=FOLDERS):
@@ -44,6 +44,11 @@ if __name__ == "__main__":
             print(f"{folder} folder cleaned")
         os.mkdir(folder)
 
+    # Validate weights
+    assert (
+        sum(WEIGHTS) == 1
+    ), f"sum of PARTS_DICT's value in config.py should be 1, now is {sum(WEIGHTS)}"
+
     # Validate image format and size
     error = 0
     for path in files_path:
@@ -67,6 +72,29 @@ if __name__ == "__main__":
         assert (
             "-" not in path.split("/")[-1]
         ), f"{path} is invalid, files should not have '-' symbol"
+
+    folder_set = set()
+    folder_error = 0
+    # check all parts folders has same order
+    for folder in FOLDERS:
+        try:
+            for root, subfolders, _ in os.walk(folder):
+                if root == folder:
+                    for subfolder in subfolders:
+                        if subfolder not in folder_set and subfolder.split("_")[
+                            1
+                        ] in map(lambda f: f.split("_")[1], folder_set):
+                            raise Exception(
+                                f"in '{root}' folder '{subfolder}' is invalid, index of subfolder with same trait should be same."
+                            )
+                        else:
+                            folder_set.add(subfolder)
+        except Exception as e:
+            print(e)
+            folder_error += 1
+    if folder_error != 0:
+        print("Exited, please fix subfolder error and retry")
+        exit()
 
     # export tables
     attrs = [os.path.split(path) for path in files_path]
