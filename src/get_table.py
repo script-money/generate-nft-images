@@ -3,6 +3,7 @@ from PIL import Image
 import pandas as pd
 import shutil
 from config import FOLDERS, EXTENSION, W, H, WEIGHTS
+from math import fsum
 
 
 def get_files_path(folders=FOLDERS):
@@ -46,7 +47,7 @@ if __name__ == "__main__":
 
     # Validate weights
     assert (
-        sum(WEIGHTS) == 1
+        fsum(WEIGHTS) == 1
     ), f"sum of PARTS_DICT's value in config.py should be 1, now is {sum(WEIGHTS)}"
 
     # Validate image format and size
