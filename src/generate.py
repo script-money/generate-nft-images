@@ -6,6 +6,7 @@ import numpy as np
 import random
 from numpy.random import choice
 from get_table import files_path
+from pathlib import Path
 from config import (
     W,
     H,
@@ -112,9 +113,9 @@ def generate_func(
             next(
                 path
                 for path in files_path
-                if attr["trait_type"] in path.split(os.sep)[1]
-                and attr["value"][0] in path.split(os.sep)[0]
-                and attr["value"][2] in path.split(os.sep)[2]
+                if attr["trait_type"] == path.split(os.sep)[1].split("_")[1]
+                and attr["value"][0] == path.split(os.sep)[0]
+                and attr["value"][2] == Path(path).stem
             )
             for attr in attributes
         ]
