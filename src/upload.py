@@ -61,7 +61,7 @@ def upload_folder(
             for file in list(filter(lambda i: "." not in i, os.listdir(folder_name)))
         ]
 
-    with httpx.Client(proxies=PROXIES) as client:
+    with httpx.Client(proxies=PROXIES, timeout=None) as client:
         response = client.post(
             f"https://ipfs.infura.io:5001/api/v0/add?pin={'true' if PIN_FILES else 'false'}&recursive=true&wrap-with-directory=true",  # pin=true if want to pin files
             files=files,
