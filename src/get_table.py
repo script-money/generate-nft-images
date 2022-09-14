@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # Validate path name has -
     for path in files_path:
         assert (
-            "-" not in path.split("/")[-1]
+            "-" not in path.split(os.sep)[-1]
         ), f"{path} is invalid, files should not have '-' symbol"
 
     folder_set = set()
