@@ -1,5 +1,4 @@
 import os
-from typing import List
 from PIL import Image
 import pandas as pd
 import numpy as np
@@ -194,7 +193,7 @@ def generate_images(
     return df_attr
 
 
-def check_values_valid(df: pd.DataFrame, select_columns: List, all_values: List):
+def check_values_valid(df: pd.DataFrame, select_columns: list, all_values: list):
     """
     Check selected column values is in the list
 
