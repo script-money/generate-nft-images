@@ -3,6 +3,7 @@ from PIL import Image
 import pandas as pd
 import shutil
 from config import FOLDERS, EXTENSION, W, H, WEIGHTS
+from math import fsum
 
 
 def get_files_path(folders=FOLDERS):
@@ -46,7 +47,7 @@ if __name__ == "__main__":
 
     # Validate weights
     assert (
-        sum(WEIGHTS) == 1
+        fsum(WEIGHTS) == 1
     ), f"sum of PARTS_DICT's value in config.py should be 1, now is {sum(WEIGHTS)}"
 
     # Validate image format and size
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     # Validate path name has -
     for path in files_path:
         assert (
-            "-" not in path.split("/")[-1]
+            "-" not in path.split(os.sep)[-1]
         ), f"{path} is invalid, files should not have '-' symbol"
 
     folder_set = set()

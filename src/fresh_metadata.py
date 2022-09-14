@@ -1,4 +1,3 @@
-from typing import List
 from httpx import Timeout, Client, AsyncClient
 import time
 import asyncio
@@ -145,7 +144,7 @@ def opensea_refresh(client: Client, id: int) -> bool:
         return False
 
 
-async def ipfs_query_tasks(request_urls: List[str]):
+async def ipfs_query_tasks(request_urls: list[str]):
     """
     create asyncio tasks for ipfs query
 

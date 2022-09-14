@@ -60,7 +60,6 @@ UPLOAD_MYSTERY_BOX_METADATA = True  # if don't want to upload metadata, set Fals
 
 
 # upload----------------------------------------------------------------------------------------------
-READ_IMAGES = False  # if read images from image_ipfs_data.backup, set True
 UPLOAD_METADATA = False  # set False if don't want to upload metadata
 PIN_FILES = False  # if want to upload permanently, set to True
 PROXIES = {

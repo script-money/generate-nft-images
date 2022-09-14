@@ -1,6 +1,9 @@
+import asyncio
 import os
-import httpx
+from httpx import AsyncClient, Limits, ReadTimeout, Client
 import json
+import pandas as pd
+import random
 from config import (
     IMAGES,
     METADATA,
@@ -9,13 +12,65 @@ from config import (
     PROJECT_ID,
     PROJECT_SECRET,
     PROXIES,
-    READ_IMAGES,
     UPLOAD_METADATA,
     PIN_FILES,
 )
-import pandas as pd
 from final_check import RENAME_DF, START_ID
-import random
+
+
+async def upload_task(files_path_chunk: list[str], wait_seconds: int) -> list[dict]:
+    """
+    upload task for asyncio, a task process 10 files
+
+    Args:
+        files_path_chunk (list[str]): a list contain 10 files path
+        wait_seconds (int): because infura limit, 1 second can post 10 times, add wait_seconds to wait
+
+    Returns:
+        list[dict]: 10 files ipfs info
+    """
+    await asyncio.sleep(wait_seconds)
+    async with AsyncClient(
+        proxies=PROXIES, limits=Limits(max_connections=10), timeout=60
+    ) as client:
+        loop = asyncio.get_running_loop()
+        tasks = [
+            loop.create_task(upload_single_async(client, file_path))
+            for file_path in files_path_chunk
+        ]
+        result = await asyncio.gather(*tasks)
+        return result
+
+
+async def upload_single_async(client: AsyncClient, file_path: str) -> dict:
+    """
+    upload folder to ipfs
+
+    Args:
+        client (AsyncClient): httpx.asyncClient instance
+        file_path (str): path of file want to upload
+
+    Returns:
+        dict: ipfs info json
+    """
+    retry = 0
+    while retry < 5:
+        try:
+            response = await client.post(
+                f"https://ipfs.infura.io:5001/api/v0/add",
+                params={
+                    "pin": "true" if PIN_FILES else "false"
+                },  # pin=true if want to pin files
+                auth=(PROJECT_ID, PROJECT_SECRET),
+                files={"file": open(file_path, "rb")},
+            )
+            res_json = response.json()
+            if res_json["Name"] != "":
+                return res_json
+        except Exception as e:
+            if isinstance(e, ReadTimeout):
+                print(f"upload {file_path.split('-')[0]} timeout, retry {retry}")
+            retry += 1
 
 
 def upload_folder(
@@ -32,39 +87,24 @@ def upload_folder(
         tuple[str, list[dict]]: (folder_hash, images_dict_list)
     """
     files = []
-    if content_type == "image/png":
-        files = [
-            (
-                folder_name.split(os.sep)[-1],
-                (file, open(os.path.join(folder_name, file), "rb"), content_type),
-            )
-            for file in list(
-                filter(lambda i: i.split(".")[-1] == "png", os.listdir(folder_name))
-            )
-        ]
-    elif content_type == "image/gif":
-        files = [
-            (
-                folder_name.split(os.sep)[-1],
-                (file, open(os.path.join(folder_name, file), "rb"), content_type),
-            )
-            for file in list(
-                filter(lambda i: i.split(".")[-1] == "gif", os.listdir(folder_name))
-            )
-        ]
-    elif content_type == "application/json":
-        files = [
-            (
-                folder_name.split(os.sep)[-1],
-                (file, open(os.path.join(folder_name, file), "rb"), content_type),
-            )
-            for file in list(filter(lambda i: "." not in i, os.listdir(folder_name)))
-        ]
+    extension = content_type.split(os.sep)[-1]
 
-    with httpx.Client(proxies=PROXIES) as client:
+    files = [
+        (file, open(os.path.join(folder_name, file), "rb"))
+        for file in list(
+            filter(lambda i: i.split(".")[-1] == extension, os.listdir(folder_name))
+        )
+    ]
+
+    with Client(proxies=PROXIES, timeout=None) as client:
         response = client.post(
-            f"https://ipfs.infura.io:5001/api/v0/add?pin={'true' if PIN_FILES else 'false'}&recursive=true&wrap-with-directory=true",  # pin=true if want to pin files
-            files=files,
+            f"https://ipfs.infura.io:5001/api/v0/add",
+            params={
+                "pin": "true" if PIN_FILES else "false",
+                "recursive": "true",
+                "wrap-with-directory": "true",
+            },
+            files=files,  # files should be List[filename, bytes]
             auth=(PROJECT_ID, PROJECT_SECRET),
         )
         upload_folder_res_list = response.text.strip().split("\n")
@@ -85,9 +125,49 @@ def upload_folder(
         return (folder_hash, images_dict_list)
 
 
+def upload_files(folder_name: str, content_type: str = "image/png") -> list[dict]:
+    """
+    upload files in a folder to ipfs
+
+    Args:
+        folder_name (str): files in folder
+        content_type (str, optional): mime file type. Defaults to "image/png".
+
+    Returns:
+        list[dict]: ipfs info list, example: [{ 'Name': str, 'Hash': str, 'Size': str }]
+    """
+    extension = content_type.split(os.sep)[-1]
+    file_paths = [
+        os.path.join(folder_name, file_path)
+        for file_path in list(
+            filter(lambda i: i.split(".")[-1] == extension, os.listdir(folder_name))
+        )
+    ]
+    file_count = len(file_paths)
+    chunk_size = 10  # 10 per second for infura
+    chunks = [file_paths[i : i + chunk_size] for i in range(0, file_count, chunk_size)]
+    tasks = []
+    results = []
+
+    def complete_batch_callback(images_ipfs_data):
+        results.append(images_ipfs_data.result())
+        print(f"complete {len(results)/len(chunks):.2%}")
+
+    loop = asyncio.get_event_loop()
+    print(f"Total {len(file_count)} files to upload, estimate time: {len(chunks)+10}s")
+    for epoch, path_chunk in enumerate(chunks):
+        task = loop.create_task(upload_task(path_chunk, epoch))
+        tasks.append(task)
+        task.add_done_callback(complete_batch_callback)
+
+    loop.run_until_complete(asyncio.wait(tasks))
+    print(f"upload {len(results)} files complete.")
+    return results
+
+
 def generate_metadata(
     df: pd.DataFrame,
-    image_ipfs_data: dict,
+    image_ipfs_data: list[dict],
     start_id: int = 0,
     image_folder: str = IMAGES,
     metadata_folder: str = METADATA,
@@ -133,26 +213,58 @@ def generate_metadata(
             "attributes": attributes,
         }
         info_json = json.dumps(info_dict)
-        with open(os.path.join(metadata_folder, str(index)), "w") as f:
+        with open(os.path.join(metadata_folder, str(index) + ".json"), "w") as f:
             f.write(info_json)
 
     return (start_id, start_id + len(df) - 1)
 
 
-if __name__ == "__main__":
-    df = RENAME_DF
-    if not READ_IMAGES:
-        image_ipfs_root, image_ipfs_data = upload_folder(IMAGES)
-        print(f"image_ipfs_root: {image_ipfs_root}")
-        # backup file use for debug upload images data
-        with open("image_ipfs_data.backup", "w") as f:
-            f.write(json.dumps(image_ipfs_data))
-        print("save image_ipfs_data to image_ipfs_data.backup")
-    else:
-        # if read images hashes from backup
-        with open("image_ipfs_data.backup", "r") as j:
-            image_ipfs_data = json.loads(j.read())
+def read_images_from_local() -> list[dict]:
+    """
+    read images from local pickle
 
+    Returns:
+        list[dict]: images ipfs info
+    """
+    with open("image_ipfs_data.backup", "r") as f:
+        result = json.loads(f.read())
+        print(f"read {len(result)} ipfs data from local")
+        return result
+
+
+def download_and_save():
+    """
+    upload images and get ipfs info
+
+    Returns:
+        list[dict]: images ipfs info
+    """
+    all_ipfs_info_batch = upload_files(IMAGES)
+    image_ipfs_data = []
+    for batch_info in all_ipfs_info_batch:
+        for single_info in batch_info:
+            image_ipfs_data.append(single_info)
+    with open("image_ipfs_data.backup", "w") as f:
+        f.write(json.dumps(image_ipfs_data))
+    print("save image_ipfs_data to image_ipfs_data.backup")
+    return image_ipfs_data
+
+
+if __name__ == "__main__":
+    if not PIN_FILES:
+        print(
+            f"Pin file is {PIN_FILES}, set PIN_FILES=True in config.py if want to pin files"
+        )
+    if os.path.exists("image_ipfs_data.backup"):
+        use_local = input("image_ipfs_data.backup exist, load from local? (y/n)")
+        if use_local == "y":
+            image_ipfs_data = read_images_from_local()
+        else:
+            image_ipfs_data = download_and_save()
+    else:
+        image_ipfs_data = download_and_save()
+
+    df = RENAME_DF
     start, end = generate_metadata(df, image_ipfs_data, START_ID)
     print(f"Generate metadata complete, Index from {start} to {end}")
 
@@ -161,5 +273,5 @@ if __name__ == "__main__":
         metadata_root, _ = upload_folder(METADATA, "application/json")
         print(f"upload metadatas complete")
         print(
-            f"Source url is {metadata_root}, you can visit ipfs://{metadata_root}/{start} to check"
+            f"Source url is {metadata_root}, you can visit ipfs://{metadata_root}/{start}.json to check"
         )
