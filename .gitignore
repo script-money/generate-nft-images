@@ -12,3 +12,4 @@ config-*.py
 *.backup
 *.ipynb
 .vscode/
+*.json
