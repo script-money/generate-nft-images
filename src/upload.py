@@ -1,6 +1,7 @@
 import asyncio
 import os
-from httpx import AsyncClient, Limits, ReadTimeout, Client
+from typing import Optional, cast
+from httpx import AsyncClient, Limits, ReadTimeout, Client, ConnectError, Response
 import json
 import pandas as pd
 import random
@@ -18,7 +19,9 @@ from config import (
 from final_check import RENAME_DF, START_ID
 
 
-async def upload_task(files_path_chunk: list[str], wait_seconds: int) -> list[dict]:
+async def upload_task(
+    files_path_chunk: list[str], wait_seconds: int
+) -> Optional[list[dict]]:
     """
     upload task for asyncio, a task process 10 files
 
@@ -39,10 +42,12 @@ async def upload_task(files_path_chunk: list[str], wait_seconds: int) -> list[di
             for file_path in files_path_chunk
         ]
         result = await asyncio.gather(*tasks)
+        if all(map(lambda i: i is None, result)):
+            return None
         return result
 
 
-async def upload_single_async(client: AsyncClient, file_path: str) -> dict:
+async def upload_single_async(client: AsyncClient, file_path: str) -> Optional[dict]:
     """
     upload folder to ipfs
 
@@ -56,26 +61,36 @@ async def upload_single_async(client: AsyncClient, file_path: str) -> dict:
     retry = 0
     while retry < 5:
         try:
-            response = await client.post(
+            response: Response = await client.post(
                 f"https://ipfs.infura.io:5001/api/v0/add",
                 params={
                     "pin": "true" if PIN_FILES else "false"
                 },  # pin=true if want to pin files
-                auth=(PROJECT_ID, PROJECT_SECRET),
+                auth=(PROJECT_ID, PROJECT_SECRET),  # type: ignore
                 files={"file": open(file_path, "rb")},
             )
-            res_json = response.json()
+            if response.status_code == 401:
+                print("Project ID and scecret is invalid")
+                exit()
+            res_json: dict = response.json()
             if res_json["Name"] != "":
                 return res_json
         except Exception as e:
             if isinstance(e, ReadTimeout):
                 print(f"upload {file_path.split('-')[0]} timeout, retry {retry}")
+            elif isinstance(e, ConnectError):
+                print(f"can't connect to ipfs, please check network or proxy setting")
+                exit()
+            else:
+                print(f"upload {file_path.split('-')[0]} error, exit")
+                exit()
             retry += 1
+    return None
 
 
 def upload_folder(
     folder_name: str, content_type: str = "image/png"
-) -> tuple[str, list[dict]]:
+) -> tuple[Optional[str], Optional[list[dict]]]:
     """
     upload folder to ipfs
 
@@ -84,10 +99,10 @@ def upload_folder(
         content_type (str, optional): mime file type. Defaults to "image/png".
 
     Returns:
-        tuple[str, list[dict]]: (folder_hash, images_dict_list)
+        tuple[Optional[str], Optional[list[dict]]]: (folder_hash, images_dict_list)
     """
     files = []
-    extension = content_type.split(os.sep)[-1]
+    extension = content_type.split("/")[-1]
 
     files = [
         (file, open(os.path.join(folder_name, file), "rb"))
@@ -105,7 +120,7 @@ def upload_folder(
                 "wrap-with-directory": "true",
             },
             files=files,  # files should be List[filename, bytes]
-            auth=(PROJECT_ID, PROJECT_SECRET),
+            auth=(PROJECT_ID, PROJECT_SECRET),  # type: ignore
         )
         upload_folder_res_list = response.text.strip().split("\n")
         if (
@@ -113,6 +128,7 @@ def upload_folder(
             == "basic auth failure: invalid project id or project secret"
         ):
             assert False, "invalid project id or project secret"
+        folder_hash: Optional[str] = ""
         try:
             folder_hash = json.loads(
                 [i for i in upload_folder_res_list if json.loads(i)["Name"] == ""][0]
@@ -136,7 +152,7 @@ def upload_files(folder_name: str, content_type: str = "image/png") -> list[dict
     Returns:
         list[dict]: ipfs info list, example: [{ 'Name': str, 'Hash': str, 'Size': str }]
     """
-    extension = content_type.split(os.sep)[-1]
+    extension = content_type.split("/")[-1]
     file_paths = [
         os.path.join(folder_name, file_path)
         for file_path in list(
@@ -151,10 +167,16 @@ def upload_files(folder_name: str, content_type: str = "image/png") -> list[dict
 
     def complete_batch_callback(images_ipfs_data):
         results.append(images_ipfs_data.result())
+        if results[0] == None:
+            print("No upload info return")
+            exit()
         print(f"complete {len(results)/len(chunks):.2%}")
 
     loop = asyncio.get_event_loop()
-    print(f"Total {len(file_count)} files to upload, estimate time: {len(chunks)+10}s")
+    if file_count == 0:
+        print(f"no any images in folder {IMAGES}")
+        exit()
+    print(f"Total {file_count} files to upload, estimate time: {len(chunks)+10}s")
     for epoch, path_chunk in enumerate(chunks):
         task = loop.create_task(upload_task(path_chunk, epoch))
         tasks.append(task)
@@ -185,8 +207,10 @@ def generate_metadata(
     Returns:
         tuple[int, int]: (start_id, end_id)
     """
+    index: Optional[int]
     for idx, row in df.iterrows():
         path = row["path"]
+        idx = cast(int, idx)
         index = idx + start_id
         image_dict = next(
             filter(
@@ -227,7 +251,7 @@ def read_images_from_local() -> list[dict]:
         list[dict]: images ipfs info
     """
     with open("image_ipfs_data.backup", "r") as f:
-        result = json.loads(f.read())
+        result: list[dict] = json.loads(f.read())
         print(f"read {len(result)} ipfs data from local")
         return result
 

@@ -30,10 +30,10 @@ def random_attr():
         List: [{"value": value, "trait_type": prop}]
     """
     attributes = []
-    select_folder = choice(FOLDERS, p=WEIGHTS)
+    select_folder: str = choice(FOLDERS, p=WEIGHTS)
     for prop in props:
         k = random.random()
-        ratio_arr = df_pac.query(
+        ratio_arr: np.ndarray = df_pac.query(
             f"(folder == '{select_folder}') & (prop == '{prop}')"
         ).ratio.values
         cum_arr = np.cumsum(ratio_arr) - k
