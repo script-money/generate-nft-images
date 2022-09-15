@@ -62,8 +62,9 @@ UPLOAD_MYSTERY_BOX_METADATA = True  # if don't want to upload metadata, set Fals
 
 
 # upload----------------------------------------------------------------------------------------------
-UPLOAD_METADATA = False  # set False if don't want to upload metadata
+UPLOAD_METADATA = True  # set False if don't want to upload metadata
 PIN_FILES = False  # if want to upload permanently, set to True
+IPFS_INFO_BACKUP = "./ipfs_info_backup.json"  # backup ipfs info
 PROXIES: ProxiesTypes = {
     "http://": "http://127.0.0.1:7890",
     "https://": "http://127.0.0.1:7890",
