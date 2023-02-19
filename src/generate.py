@@ -20,7 +20,9 @@ from config import (
     ROOT_DIR,
 )
 from multiprocessing import Pool, cpu_count
+import warnings 
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def random_attr():
     """
