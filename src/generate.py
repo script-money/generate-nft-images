@@ -21,10 +21,51 @@ from config import (
 )
 from multiprocessing import Pool, cpu_count
 import warnings 
+from typing import TypedDict
+
+rule_df = pd.read_csv('./rules.csv').dropna()
+
+class RandomAttr(TypedDict):
+    value: tuple[str, str, str]
+    trait_type: str
+
+def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool,RandomAttr]:
+    """
+    helper function to apply rules
+
+    Args:
+        random (RandomAttr): input random attribute
+        rule (str): csv format rule
+
+    Returns:
+        tuple[bool,RandomAttr]: (is_valid, valid_random_attr)
+    """
+    for _, row in rule_df.iterrows(): # iter over rules
+        list_prop_value = row['list_prop_value']
+        
+        if pd.isna(list_prop_value):
+            continue
+        list_prop_values = eval(list_prop_value)
+        if row['rule'] == 1 and random[0]['value'][2] == row['value']:
+            for prop_value in list_prop_values:
+                prop, new_value = prop_value[0], prop_value[1]
+                for attr in random:
+                    if attr['trait_type'] == prop:
+                        if attr['value'][2] == new_value:
+                            continue
+                        attr['value'] = (attr["value"][0], attr["value"][1], new_value)
+
+        if row['rule'] == -1 and random[0]['value'][2] == row['value']:
+            for prop_value in list_prop_values:
+                prop, new_value = prop_value[0], prop_value[1]
+                for attr in random:
+                    if attr['trait_type'] == prop and attr['value'][2] == new_value:
+                        return (False, "")     
+    return (True, random)
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def random_attr():
+def random_attr() -> list[RandomAttr]:
     """
     helper function to generate random attributes
 
@@ -40,7 +81,7 @@ def random_attr():
         ).ratio.values
         cum_arr = np.cumsum(ratio_arr) - k
         first_index = next(x[0] for x in enumerate(cum_arr) if x[1] > 0)
-        value = df_pac.loc[(select_folder), (prop), :].index[
+        value: tuple = df_pac.loc[(select_folder), (prop), :].index[
             first_index
         ]  # in pandas 1.4, loc is not return tuple but single element
         if type(value) is str:
@@ -85,30 +126,41 @@ def has_transparency(img):
 
 
 def generate_func(
-    start_index, end_index, start_id=0,
+    start_index: int, end_index: int, start_id: int=0,
 ):
     """
     generate images function single process
 
     Args:
-        start_index (_type_): start index
-        end_index (_type_): end index
+        start_index (int): start index
+        end_index (int): end index
         start_id (int, optional): which index start. Defaults to 0.
 
     Returns:
         pd.DataFrame: generated dataframe by this process
     """
+
     cols = ["path"] + [i["trait_type"] for i in random_attr()]
     df_batch = pd.DataFrame(columns=cols)
     for i in range(start_index, end_index):
-        # avoid duplicate
         index = i + start_id
-        attributes = random_attr()
-        key = hash(str(attributes))
-        while key in used_attributes:
+
+        is_valid_attr = False
+        is_not_duplicate = False
+        while not is_valid_attr or not is_not_duplicate:
             attributes = random_attr()
+            is_valid_attr, attributes = apply_rules(attributes, rule_df)
+            if not is_valid_attr:
+                continue
+            
+            # avoid duplicate
             key = hash(str(attributes))
-        used_attributes[key] = attributes
+            if key in used_attributes:
+                continue
+
+            used_attributes[key] = attributes
+            is_not_duplicate = True
+
         # Get the images to be read in the order of overlay
         paths = [
             next(

@@ -13,3 +13,4 @@ config-*.py
 *.ipynb
 .vscode/
 *.json
+ratio.csv.*

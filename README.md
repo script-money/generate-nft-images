@@ -4,7 +4,7 @@
 
 It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/) to manage the environment. After installing miniconda, run the following command to generate the environment and run it
 
-1. `conda create --name generate python=3.9 pillow pandas httpx`
+1. `conda create --name generate python=3.10 pillow pandas httpx`
 2. `conda activate generate`
 3. `pip install python-dotenv`
 4. modify configs in `src/config.py`
@@ -33,12 +33,4 @@ It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anacon
 
 - [x] Refresh metadata: query ipfs and opensea api to refresh metadata, need opensea apikey
 
-## discuss
-
-You can use the **[Discussions](https://github.com/script-money/generate-nft-images/discussions)** to talk
-
-## sponsor
-
-0x49E53Fb3d5bf1532fEBAD88a1979E33A94844d1d
-
-![ETH](https://user-images.githubusercontent.com/74860630/178182707-6ea0d97c-f885-4865-99ba-04e8941863da.png)
+- [x] Using rule files to limit the coexistence or mutual exclusion of generated elements

@@ -99,15 +99,42 @@ if __name__ == "__main__":
 
     # export tables
     attrs = [os.path.split(path) for path in files_path]
-    d = {
+    first_prop_info = str(attrs[0][0].split(os.sep)[-1].split("_")[1]) + " : " + str(
+        attrs[0][1].split(".")[0]
+    )
+    second_prop_info = str(attrs[1][0].split(os.sep)[-1].split("_")[1]) + " : " + str(
+        attrs[1][1].split(".")[0]
+    )
+    ratio_data = {
         "folder": [a[0].split(os.sep)[-2] for a in attrs],
         "prop": [a[0].split("_")[1] for a in attrs],
         "value": [a[1].split(".")[0] for a in attrs],
         "ratio": 1,
     }
-    df = pd.DataFrame(data=d)
-    df.to_csv("ratio.csv", index=False)
+    df0 = pd.DataFrame(data=ratio_data)
+    df0.to_csv("ratio.csv", index=False)
 
+    rule_data = {
+        "folder": [a[0].split(os.sep)[-2] for a in attrs],
+        "prop": [a[0].split("_")[1] for a in attrs],
+        "value": [a[1].split(".")[0] for a in attrs],
+        "list_prop_value": "",
+        "rule": 0
+    }
+    df1 = pd.DataFrame(data=rule_data)
+    print("---example rules---")
+    *other, prop_1, prop_2 = df1["prop"].unique()
+    value1 = df1[df1["prop"] == prop_1]["value"].unique()[0]
+    value2 = df1[df1["prop"] == prop_2]["value"].unique()[0]
+    df1.loc[0, "list_prop_value"] = f"[('{prop_1}','{value1}'),('{prop_2}','{value2}')]"
+    print(f"if prop is {first_prop_info}, attrs will have [('{prop_1}','{value1}'),('{prop_2}','{value2}')] ")
+    df1.loc[1, "list_prop_value"] = f"[('{prop_1}','{value1}')]"
+    print(f"if prop is {second_prop_info}, attrs will NOT have [('{prop_1}','{value1}')]")
+    df1.loc[0, "rule"] = 1
+    df1.loc[1, "rule"] = -1
+    df1.to_csv("rules.csv", index=False)
+    print("set your rules in rules.csv")
+    print("-------------------")
     if os.path.exists("ratio.csv"):
         print("generate table success!")
         print("You can modify ratio.csv to change the ratio of each parts")

@@ -1,0 +1,33 @@
+folder,prop,value,list_prop_value,rule
+parts,Background,blue,"[('First Letter','B'),('Second Letter','A')]",1
+parts,Background,green,"[('First Letter','B')]",-1
+parts,Background,purple,,0
+parts,Background,red,,0
+parts,Background,white,,0
+parts,First Letter,B,,0
+parts,First Letter,C,,0
+parts,First Letter,D,,0
+parts,First Letter,E,,0
+parts,First Letter,F,,0
+parts,First Letter,G,,0
+parts,First Letter,H,,0
+parts,First Letter,I,,0
+parts,First Letter,J,,0
+parts,First Letter,K,,0
+parts,Second Letter,A,,0
+parts,Second Letter,Q,,0
+parts,Second Letter,R,,0
+parts,Second Letter,T,,0
+parts,Second Letter,V,,0
+parts,Second Letter,W,,0
+parts,Second Letter,X,,0
+parts,Second Letter,Y,,0
+parts,Second Letter,Z,,0
+parts,Second Letter,p,,0
+parts2,Background,black,,0
+parts2,First Letter,1,,0
+parts2,First Letter,2,,0
+parts2,First Letter,3,,0
+parts2,First Letter,empty,,0
+parts2,Second Letter,empty,,0
+parts2,Second Letter,¥,,0
