@@ -65,7 +65,10 @@ async def ipfs_query(client: AsyncClient, url: str):
     is_base = is_base_url(request_url)
     if is_base:
         try:
-            metadata_res = await client.get(request_url, timeout=Timeout(60),)
+            metadata_res = await client.get(
+                request_url,
+                timeout=Timeout(60),
+            )
             if metadata_res.status_code == 200:
                 if request_url in failed_base_urls:
                     failed_base_urls.remove(request_url)
@@ -75,7 +78,8 @@ async def ipfs_query(client: AsyncClient, url: str):
                 image_opensea_url = ipfs_to_opensea(image_url)
                 try:
                     image_res = await client.get(
-                        image_opensea_url, timeout=Timeout(60),
+                        image_opensea_url,
+                        timeout=Timeout(60),
                     )
                     if (
                         image_res.status_code == 200
@@ -99,7 +103,10 @@ async def ipfs_query(client: AsyncClient, url: str):
                 )
     else:
         try:
-            image_res = await client.get(request_url, timeout=Timeout(60),)
+            image_res = await client.get(
+                request_url,
+                timeout=Timeout(60),
+            )
             if image_res.status_code == 200 and request_url in failed_image_urls:
                 failed_image_urls.remove(request_url)
                 print(f"remove a failed image, remain: {len(failed_image_urls)}")
@@ -236,4 +243,3 @@ if __name__ == "__main__":
         end_id = min(AMOUNT, start_id + 100 - 1)
         print(f"Request {start_id} to {end_id}")
         main(start_id, end_id)
-

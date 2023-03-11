@@ -16,7 +16,9 @@ def remove_duplicate_by_traits(trait_col_index: list = [], root: str = IMAGES):
     if len(trait_col_index) == 0:
         trait_col_index = [i + 1 for i in range(len(df_pac.index.levels[1]))]
 
-    get_file_list = lambda r: list(filter(lambda f: f.split(".")[1] == "png", os.listdir(r)))
+    get_file_list = lambda r: list(
+        filter(lambda f: f.split(".")[1] == "png", os.listdir(r))
+    )
     file_list = get_file_list(root)
     duplicates = []
     hash_keys = dict()

@@ -4,7 +4,7 @@
 
 It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/) to manage the environment. After installing miniconda, run the following command to generate the environment and run it
 
-1. `conda create --name generate python=3.10 pillow pandas httpx`
+1. `conda create --name generate python=3.10 pillow pandas httpx black`
 2. `conda activate generate`
 3. `pip install python-dotenv`
 4. modify configs in `src/config.py`

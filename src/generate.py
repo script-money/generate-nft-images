@@ -20,17 +20,19 @@ from config import (
     ROOT_DIR,
 )
 from multiprocessing import Pool, cpu_count
-import warnings 
+import warnings
 from typing import TypedDict
 
-rule_df = pd.read_csv('./rules.csv').dropna()
+rule_df = pd.read_csv("./rules.csv").dropna()
 # TODO check rule.csv is valid
+
 
 class RandomAttr(TypedDict):
     value: tuple[str, str, str]
     trait_type: str
 
-def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool,RandomAttr]:
+
+def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool, RandomAttr]:
     """
     helper function to apply rules
 
@@ -41,38 +43,47 @@ def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool,RandomA
     Returns:
         tuple[bool,RandomAttr]: (is_valid, valid_random_attr)
     """
-    current_folder = random[0]['value'][0]
+    current_folder = random[0]["value"][0]
     random_source = random.copy()
     # TODO For a set of rules for a RandomAttr, may conflict, should check if attr conlict first
-    for _, row in rule_df.iterrows(): # iter over rules
-        rule =  row['rule']
+    for _, row in rule_df.iterrows():  # iter over rules
+        rule = row["rule"]
         if rule == 0:
             continue
 
-        restrict_prop, restrict_value = row['prop'], row['value']
-        rule_prop_value: list[tuple[str]] | None = eval(row['list_prop_value'])
-    
-        target_attr = next(attr for attr in random if attr['value'][1] == restrict_prop)
-        to_change_value = target_attr['value'][2]
-        
+        restrict_prop, restrict_value = row["prop"], row["value"]
+        rule_prop_value: list[tuple[str]] | None = eval(row["list_prop_value"])
+
+        target_attr = next(attr for attr in random if attr["value"][1] == restrict_prop)
+        to_change_value = target_attr["value"][2]
+
         if rule == -1 and to_change_value == restrict_value:
             for prop_value in rule_prop_value:
                 prop, new_value = prop_value
                 for attr in random:
-                    if attr['trait_type'] == prop and attr['value'][2] == new_value:
-                        return (False, "")     
-                    
+                    if attr["trait_type"] == prop and attr["value"][2] == new_value:
+                        return (False, "")
+
         if rule == 1 and to_change_value == restrict_value:
-            prop, new_value = sample(rule_prop_value,1)[0] if len(rule_prop_value) > 1 else rule_prop_value[0]
+            prop, new_value = (
+                sample(rule_prop_value, 1)[0]
+                if len(rule_prop_value) > 1
+                else rule_prop_value[0]
+            )
             for attr in random:
-                if attr['trait_type'] == prop:
+                if attr["trait_type"] == prop:
                     index = random_source.index(attr)
-                    random_source[index] = {"value":(attr["value"][0], attr["value"][1], new_value), "trait_type": prop} 
+                    random_source[index] = {
+                        "value": (attr["value"][0], attr["value"][1], new_value),
+                        "trait_type": prop,
+                    }
                     return (True, random_source)
 
     return (True, random_source)
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
 
 def random_attr() -> list[RandomAttr]:
     """
@@ -135,7 +146,9 @@ def has_transparency(img):
 
 
 def generate_func(
-    start_index: int, end_index: int, start_id: int=0,
+    start_index: int,
+    end_index: int,
+    start_id: int = 0,
 ):
     """
     generate images function single process
@@ -161,7 +174,7 @@ def generate_func(
             is_valid_attr, attributes = apply_rules(attributes, rule_df)
             if not is_valid_attr:
                 continue
-            
+
             # avoid duplicate
             key = hash(str(attributes))
             if key in used_attributes:
@@ -192,19 +205,27 @@ def generate_func(
             f"{index}-{'-'.join(list(map(lambda i: i['value'][-1] ,attributes)))}.png"
         )
         base_img.save(
-            os.path.join(save_folder, filename), format="jpeg", quality=QUALITY,
+            os.path.join(save_folder, filename),
+            format="jpeg",
+            quality=QUALITY,
         )
         # add porpety
         row_dict = {"path": os.path.join(save_folder, filename)} | {
             i["trait_type"]: i["value"][-1] for i in attributes
         }
         new_row_df = pd.DataFrame.from_dict(row_dict, orient="index").T
-        df_batch = pd.concat([df_batch, new_row_df], ignore_index=True,)
+        df_batch = pd.concat(
+            [df_batch, new_row_df],
+            ignore_index=True,
+        )
     return df_batch
 
 
 def generate_images(
-    df_csv: pd.DataFrame, amount: int, save_folder: str = "./images", start_id: int = 0,
+    df_csv: pd.DataFrame,
+    amount: int,
+    save_folder: str = "./images",
+    start_id: int = 0,
 ) -> pd.DataFrame:
     """
     generate images main function, check prequisites and generate images in parallel
@@ -280,7 +301,7 @@ def check_values_valid(df: pd.DataFrame, select_columns: list, all_values: list)
 
 
 def generate_images_from_attr_csv(csv_path: str):
-    """ 
+    """
     This function use for modify same images already generated
     You should use attr.csv in images folder as csv_path
     Change some value in csv then run this function
@@ -316,7 +337,10 @@ def generate_images_from_attr_csv(csv_path: str):
                         if not has_transparency(img):
                             img = img.convert("RGBA")
                         base_img.paste(img, (0, 0), mask=img)
-                        if (prop_index, row[prop],) not in attributes:
+                        if (
+                            prop_index,
+                            row[prop],
+                        ) not in attributes:
                             attributes.append((prop_index, row[prop]))
         # save images
         filename = f"{index}-{'-'.join(map(lambda t: t[1],attributes))}.png"
@@ -325,7 +349,10 @@ def generate_images_from_attr_csv(csv_path: str):
         # add porpety
         row_dict = {"path": save_path} | {prop: row[prop] for prop in props}
         new_row_df = pd.DataFrame.from_dict(row_dict, orient="index").T
-        df_batch = pd.concat([df_batch, new_row_df], ignore_index=True,)
+        df_batch = pd.concat(
+            [df_batch, new_row_df],
+            ignore_index=True,
+        )
 
     df_batch.to_csv(os.path.join(save_folder, "attr.csv"), index=False)
 
