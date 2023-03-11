@@ -105,19 +105,15 @@ if __name__ == "__main__":
     second_prop_info = str(attrs[1][0].split(os.sep)[-1].split("_")[1]) + " : " + str(
         attrs[1][1].split(".")[0]
     )
-    ratio_data = {
-        "folder": [a[0].split(os.sep)[-2] for a in attrs],
+    folder_prop_value = {
+        "folder": [a[0].split(os.sep)[0] for a in attrs],
         "prop": [a[0].split("_")[1] for a in attrs],
         "value": [a[1].split(".")[0] for a in attrs],
-        "ratio": 1,
     }
+    ratio_data = folder_prop_value | {"ratio": 1,}
     df0 = pd.DataFrame(data=ratio_data)
     df0.to_csv("ratio.csv", index=False)
-
-    rule_data = {
-        "folder": [a[0].split(os.sep)[-2] for a in attrs],
-        "prop": [a[0].split("_")[1] for a in attrs],
-        "value": [a[1].split(".")[0] for a in attrs],
+    rule_data = folder_prop_value |{
         "list_prop_value": "",
         "rule": 0
     }
