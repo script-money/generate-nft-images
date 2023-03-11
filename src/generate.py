@@ -2,7 +2,7 @@ import os
 from PIL import Image
 import pandas as pd
 import numpy as np
-import random
+from random import sample, random
 from numpy.random import choice
 from get_table import files_path
 from pathlib import Path
@@ -24,6 +24,7 @@ import warnings
 from typing import TypedDict
 
 rule_df = pd.read_csv('./rules.csv').dropna()
+# TODO check rule.csv is valid
 
 class RandomAttr(TypedDict):
     value: tuple[str, str, str]
@@ -35,33 +36,43 @@ def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool,RandomA
 
     Args:
         random (RandomAttr): input random attribute
-        rule (str): csv format rule
+        rule_df (DataFrame): format rule dataframe
 
     Returns:
         tuple[bool,RandomAttr]: (is_valid, valid_random_attr)
     """
-    for _, row in rule_df.iterrows(): # iter over rules
-        list_prop_value = row['list_prop_value']
-        
-        if pd.isna(list_prop_value):
+    current_folder = random[0]['value'][0]
+    filter_rule_df = rule_df[rule_df['folder'] == current_folder] # only use rules of current folder
+    random_source = random.copy()
+    # TODO For a set of rules for a RandomAttr, may conflict, should check if attr conlict first
+    for _, row in filter_rule_df.iterrows(): # iter over rules
+        rule =  row['rule']
+        if rule == 0:
             continue
-        list_prop_values = eval(list_prop_value)
-        if row['rule'] == 1 and random[0]['value'][2] == row['value']:
-            for prop_value in list_prop_values:
-                prop, new_value = prop_value[0], prop_value[1]
-                for attr in random:
-                    if attr['trait_type'] == prop:
-                        if attr['value'][2] == new_value:
-                            continue
-                        attr['value'] = (attr["value"][0], attr["value"][1], new_value)
 
-        if row['rule'] == -1 and random[0]['value'][2] == row['value']:
-            for prop_value in list_prop_values:
-                prop, new_value = prop_value[0], prop_value[1]
+        restrict_folder, restrict_prop, restrict_value = row['folder'], row['prop'], row['value']
+        rule_prop_value: list[tuple[str]] | None = eval(row['list_prop_value'])
+    
+        target_attr = next(attr for attr in random if attr['value'][0] == restrict_folder and attr['value'][1] == restrict_prop)
+        to_change_value = target_attr['value'][2]
+        
+        if rule == -1 and to_change_value == restrict_value:
+            for prop_value in rule_prop_value:
+                prop, new_value = prop_value
                 for attr in random:
                     if attr['trait_type'] == prop and attr['value'][2] == new_value:
                         return (False, "")     
-    return (True, random)
+                    
+        if rule == 1 and to_change_value == restrict_value:
+            prop, new_value = sample(rule_prop_value,1)[0] if len(rule_prop_value) > 1 else rule_prop_value[0]
+            for attr in random:
+                if attr['trait_type'] == prop:
+                    index = random_source.index(attr)
+                    random_source[index] = {"value":(attr["value"][0], attr["value"][1], new_value), "trait_type": prop} 
+                    return (True, random_source)
+
+
+    return (True, random_source)
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -75,7 +86,7 @@ def random_attr() -> list[RandomAttr]:
     attributes = []
     select_folder: str = choice(FOLDERS, p=WEIGHTS)
     for prop in props:
-        k = random.random()
+        k = random()
         ratio_arr: np.ndarray = df_pac.query(
             f"(folder == '{select_folder}') & (prop == '{prop}')"
         ).ratio.values
@@ -327,6 +338,7 @@ df_pac = (
     df_group.groupby(level=["folder", "prop"])
     .apply(lambda x: x / float(x.sum()))
     .rename(columns={0: "ratio"})
+    .sort_values(by=["ratio"], ascending=[True])
 )
 props = df_csv["prop"].unique()
 used_attributes = {}
