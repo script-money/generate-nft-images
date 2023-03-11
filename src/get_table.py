@@ -113,7 +113,9 @@ if __name__ == "__main__":
     ratio_data = folder_prop_value | {"ratio": 1,}
     df0 = pd.DataFrame(data=ratio_data)
     df0.to_csv("ratio.csv", index=False)
-    rule_data = folder_prop_value |{
+    rule_data = {
+        "prop": [a[0].split("_")[1] for a in attrs],
+        "value": [a[1].split(".")[0] for a in attrs],
         "list_prop_value": "",
         "rule": 0
     }

@@ -42,18 +42,17 @@ def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool,RandomA
         tuple[bool,RandomAttr]: (is_valid, valid_random_attr)
     """
     current_folder = random[0]['value'][0]
-    filter_rule_df = rule_df[rule_df['folder'] == current_folder] # only use rules of current folder
     random_source = random.copy()
     # TODO For a set of rules for a RandomAttr, may conflict, should check if attr conlict first
-    for _, row in filter_rule_df.iterrows(): # iter over rules
+    for _, row in rule_df.iterrows(): # iter over rules
         rule =  row['rule']
         if rule == 0:
             continue
 
-        restrict_folder, restrict_prop, restrict_value = row['folder'], row['prop'], row['value']
+        restrict_prop, restrict_value = row['prop'], row['value']
         rule_prop_value: list[tuple[str]] | None = eval(row['list_prop_value'])
     
-        target_attr = next(attr for attr in random if attr['value'][0] == restrict_folder and attr['value'][1] == restrict_prop)
+        target_attr = next(attr for attr in random if attr['value'][1] == restrict_prop)
         to_change_value = target_attr['value'][2]
         
         if rule == -1 and to_change_value == restrict_value:
@@ -70,7 +69,6 @@ def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool,RandomA
                     index = random_source.index(attr)
                     random_source[index] = {"value":(attr["value"][0], attr["value"][1], new_value), "trait_type": prop} 
                     return (True, random_source)
-
 
     return (True, random_source)
 
