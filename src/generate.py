@@ -18,6 +18,7 @@ from config import (
     START_ID,
     EXTENSION,
     ROOT_DIR,
+    USE_MULTIPROCESS,
 )
 from multiprocessing import Pool, cpu_count
 import warnings
@@ -245,6 +246,7 @@ def generate_images(
         folder_df = prop_count_df.query(f"folder == '{_folder}'")["ratio"]
         max_count = folder_df.values.cumprod()[-1]
         sum_count += max_count
+    # TODO sum_count may be negative because of too large
     assert (
         amount <= sum_count
     ), "Generate too much, there will be duplicate generation, should increase the number of material or reduce the total amount"
@@ -257,7 +259,7 @@ def generate_images(
         == 0
     ), f"{save_folder} folder is not empty, backup the original data and tables first"
 
-    processes = cpu_count() - 1
+    processes = cpu_count() - 1 if USE_MULTIPROCESS else 1
     pool = Pool(processes=processes)
     start_end_indexs = list(
         map(

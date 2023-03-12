@@ -56,6 +56,7 @@ AMOUNT = 100  # amount of images to generate
 NAMES = ["Test NFT"]  # custom NFT names, random choice from list
 DESCRIPTION = "generate images test NFT description"  # custom NFT description
 QUALITY = Quality.web_very_high.value
+USE_MULTIPROCESS = True  # set False for debug
 # ----------------------------------------------------------------------------------------------------
 
 
