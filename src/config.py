@@ -16,6 +16,11 @@ PARTS_DICT = {
 }  # if you have multiple groups images parts, set key as folder name, value is occurrence probability
 W = 400  # image width. pixel unit
 H = 400  # image height. pixel unit
+LAYER_NAMES = [
+    # "01_Background",
+    # "02_First Letter",
+    # "03_Second Letter",
+]
 # ----------------------------------------------------------------------------------------------------
 
 

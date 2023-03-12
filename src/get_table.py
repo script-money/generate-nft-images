@@ -2,7 +2,7 @@ import os
 from PIL import Image
 import pandas as pd
 import shutil
-from config import FOLDERS, EXTENSION, W, H, WEIGHTS
+from config import FOLDERS, EXTENSION, W, H, WEIGHTS, LAYER_NAMES
 from math import fsum
 
 
@@ -109,6 +109,28 @@ if __name__ == "__main__":
         + " : "
         + str(attrs[1][1].split(".")[0])
     )
+    # create empty.png
+    if not os.path.exists("empty.png"):
+        im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        im.save("empty.png")
+
+    # fill empty to miss folders, split attrs to multiple parts by folder
+    for subfolder in FOLDERS:
+        layer_names = LAYER_NAMES
+        if len(layer_names) == 0:
+            layer_names = list(sorted(set(map(lambda i: i[0].split(os.sep)[1], attrs))))
+
+        use_prop_filter_by_folder = list(
+            filter(lambda i: i[0].split(os.sep)[0] == subfolder, attrs)
+        )
+        use_prop = set(map(lambda i: i[0].split(os.sep)[1], use_prop_filter_by_folder))
+        remain_prop = set(layer_names) - use_prop
+        for add_prop in remain_prop:
+            folder_to_create = f"{subfolder}/{add_prop}"
+            os.mkdir(folder_to_create)
+            shutil.copy("empty.png", folder_to_create)
+            attrs.append((folder_to_create, "empty.png"))
+
     ratio_data = {
         "folder": [a[0].split(os.sep)[0] for a in attrs],
         "prop": [a[0].split("_")[1] for a in attrs],
