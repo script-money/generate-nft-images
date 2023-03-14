@@ -14,3 +14,7 @@ config-*.py
 .vscode/
 *.json
 ratio.csv.*
+venv/
+Lib/
+Scripts/
+pyvenv.cfg
