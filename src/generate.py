@@ -25,7 +25,29 @@ import warnings
 from typing import TypedDict
 
 rule_df = pd.read_csv("./rules.csv").dropna()
-# TODO check rule.csv is valid
+
+
+def check_rules(df: pd.DataFrame) -> bool:
+    """
+    check rule.csv is valid
+
+    Args:
+        rule_df (DataFrame): rule dataframe
+
+    Returns:
+        bool: is valid
+    """
+    valid = True
+    # row has same prop,value,rule can only have one
+    duplicated_rows = df.duplicated(subset=["prop", "value", "rule"])
+    valid = valid and not duplicated_rows.any()
+    if not valid:
+        print(
+            "duplicated rows: ",
+            df[duplicated_rows][["prop", "value", "rule"]].values[0],
+        )
+
+    return valid
 
 
 class RandomAttr(TypedDict):
@@ -33,7 +55,7 @@ class RandomAttr(TypedDict):
     trait_type: str
 
 
-def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool, RandomAttr]:
+def apply_rules(random: RandomAttr, df: pd.DataFrame) -> tuple[bool, RandomAttr]:
     """
     helper function to apply rules
 
@@ -44,28 +66,30 @@ def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool, Random
     Returns:
         tuple[bool,RandomAttr]: (is_valid, valid_random_attr)
     """
-    current_folder = random[0]["value"][0]
     random_source = random.copy()
-    # TODO For a set of rules for a RandomAttr, may conflict, should check if attr conlict first
-    for _, row in rule_df.iterrows():  # iter over rules
+    for _, row in df.iterrows():  # iter over rules
         rule = row["rule"]
         if rule == 0:
             continue
 
         restrict_prop, restrict_value = row["prop"], row["value"]
-        rule_prop_value: list[tuple[str]] | None = eval(row["list_prop_value"])
 
         target_attr = next(attr for attr in random if attr["value"][1] == restrict_prop)
         to_change_value = target_attr["value"][2]
 
-        if rule == -1 and to_change_value == restrict_value:
+        if to_change_value != restrict_value:
+            continue
+
+        rule_prop_value: list[tuple[str]] | None = eval(row["list_prop_value"])
+
+        if rule == -1:
             for prop_value in rule_prop_value:
                 prop, new_value = prop_value
                 for attr in random:
                     if attr["trait_type"] == prop and attr["value"][2] == new_value:
                         return (False, "")
 
-        if rule == 1 and to_change_value == restrict_value:
+        if rule == 1:
             prop, new_value = (
                 sample(rule_prop_value, 1)[0]
                 if len(rule_prop_value) > 1
@@ -73,12 +97,14 @@ def apply_rules(random: RandomAttr, rule_df: pd.DataFrame) -> tuple[bool, Random
             )
             for attr in random:
                 if attr["trait_type"] == prop:
-                    index = random_source.index(attr)
+                    try:
+                        index = random_source.index(attr)
+                    except ValueError:
+                        return (False, "")
                     random_source[index] = {
                         "value": (attr["value"][0], attr["value"][1], new_value),
                         "trait_type": prop,
                     }
-                    return (True, random_source)
 
     return (True, random_source)
 
@@ -240,6 +266,8 @@ def generate_images(
     Returns:
         pd.DataFrame: all generated images with save to attr.csv and return
     """
+    if not check_rules(rule_df):
+        raise ValueError("Rules are not satisfied")
     prop_count_df = df_csv.groupby(["folder", "prop"]).count()
     sum_count = 0
     for _folder in FOLDERS:
