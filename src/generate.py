@@ -274,9 +274,8 @@ def generate_images(
         folder_df = prop_count_df.query(f"folder == '{_folder}'")["ratio"]
         max_count = folder_df.values.cumprod()[-1]
         sum_count += max_count
-    # TODO sum_count may be negative because of too large
     assert (
-        amount <= sum_count
+        amount <= sum_count and amount > 0
     ), "Generate too much, there will be duplicate generation, should increase the number of material or reduce the total amount"
     min_ratio_except_zero = np.min(df_pac[df_pac["ratio"] > 0].ratio.values)
     assert (
