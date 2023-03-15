@@ -115,11 +115,11 @@ if __name__ == "__main__":
         im.save("empty.png")
 
     # fill empty to miss folders, split attrs to multiple parts by folder
-    for subfolder in FOLDERS:
-        layer_names = LAYER_NAMES
-        if len(layer_names) == 0:
-            layer_names = list(sorted(set(map(lambda i: i[0].split(os.sep)[1], attrs))))
+    layer_names = LAYER_NAMES
+    if len(layer_names) == 0:
+        layer_names = list(sorted(set(map(lambda i: i[0].split(os.sep)[1], attrs))))
 
+    for subfolder in FOLDERS:
         use_prop_filter_by_folder = list(
             filter(lambda i: i[0].split(os.sep)[0] == subfolder, attrs)
         )
