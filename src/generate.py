@@ -23,6 +23,7 @@ from config import (
 from multiprocessing import Pool, cpu_count
 import warnings
 from typing import TypedDict
+from copy import deepcopy
 
 rule_df = pd.read_csv("./rules.csv").dropna()
 
@@ -66,7 +67,7 @@ def apply_rules(random: RandomAttr, df: pd.DataFrame) -> tuple[bool, RandomAttr]
     Returns:
         tuple[bool,RandomAttr]: (is_valid, valid_random_attr)
     """
-    random_source = random.copy()
+    random_source = deepcopy(random)
     for _, row in df.iterrows():  # iter over rules
         rule = row["rule"]
         if rule == 0:
@@ -74,7 +75,7 @@ def apply_rules(random: RandomAttr, df: pd.DataFrame) -> tuple[bool, RandomAttr]
 
         restrict_prop, restrict_value = row["prop"], row["value"]
 
-        target_attr = next(attr for attr in random if attr["value"][1] == restrict_prop)
+        target_attr = next(attr for attr in random_source if attr["value"][1] == restrict_prop)
         to_change_value = target_attr["value"][2]
 
         if to_change_value != restrict_value:
@@ -85,9 +86,11 @@ def apply_rules(random: RandomAttr, df: pd.DataFrame) -> tuple[bool, RandomAttr]
         if rule == -1:
             for prop_value in rule_prop_value:
                 prop, new_value = prop_value
-                for attr in random:
+                for attr in random_source:
                     if attr["trait_type"] == prop and attr["value"][2] == new_value:
                         return (False, "")
+
+        modified_indices = set()
 
         if rule == 1:
             prop, new_value = (
@@ -95,8 +98,11 @@ def apply_rules(random: RandomAttr, df: pd.DataFrame) -> tuple[bool, RandomAttr]
                 if len(rule_prop_value) > 1
                 else rule_prop_value[0]
             )
-            for attr in random:
+
+            for idx, attr in enumerate(random_source):
                 if attr["trait_type"] == prop:
+                    if idx in modified_indices:
+                        continue
                     try:
                         index = random_source.index(attr)
                     except ValueError:
@@ -105,6 +111,7 @@ def apply_rules(random: RandomAttr, df: pd.DataFrame) -> tuple[bool, RandomAttr]
                         "value": (attr["value"][0], attr["value"][1], new_value),
                         "trait_type": prop,
                     }
+                    modified_indices.add(index)
 
     return (True, random_source)
 
