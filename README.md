@@ -2,18 +2,14 @@
 
 ## install
 
-It is recommended to use [miniconda](https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/) to manage the environment. After installing miniconda, run the following command to generate the environment and run it
-
-1. `conda create --name generate python=3.10 pillow pandas httpx black`
-2. `conda activate generate`
-3. `pip install python-dotenv`
-4. modify configs in `src/config.py`
-5. run `python src/get_table.py`, this will generate a table called ratio.csv, you can modify probability of feature occurrence in the ratio column.
-6. run `python src/generate.py` to generate images.
-7. `python src/final_check.py`, remove the duplicates and view the current probability distribution, which can be adjusted again.
-8. (can skip) `python src/upload_mystery_box.py` push mystery box metadata to IPFS
-9. `python src/upload.py` push data to IPFS
-10. (if need) `python src/fresh_metadata.py` to refresh opensea metadata to show new images
+1. install dependencies `pip install -r requirements.txt`
+2. modify configs in `src/config.py`
+3. run `python src/get_table.py`, this will generate a table called ratio.csv, you can modify probability of feature occurrence in the ratio column or add rules in `rules.csv` to limit the coexistence or mutual exclusion.
+4. run `python src/generate.py` to generate images.
+5. `python src/final_check.py`, remove the duplicates and view the current probability distribution, which can be adjusted again.
+6. (can skip) `python src/upload_mystery_box.py` push mystery box metadata to IPFS
+7. `python src/upload.py` push data to IPFS
+8.  (if need) `python src/fresh_metadata.py` to refresh opensea metadata to show new images
 
 ## features
 

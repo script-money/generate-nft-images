@@ -1,0 +1,5 @@
+pillow 
+pandas<2.0.0
+httpx 
+black
+python-dotenv
