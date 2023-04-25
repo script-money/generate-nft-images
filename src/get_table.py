@@ -126,7 +126,7 @@ if __name__ == "__main__":
         use_prop = set(map(lambda i: i[0].split(os.sep)[1], use_prop_filter_by_folder))
         remain_prop = set(layer_names) - use_prop
         for add_prop in remain_prop:
-            folder_to_create = f"{subfolder}/{add_prop}"
+            folder_to_create = f"{subfolder}{os.sep}{add_prop}"
             os.mkdir(folder_to_create)
             shutil.copy("empty.png", folder_to_create)
             attrs.append((folder_to_create, "empty.png"))
